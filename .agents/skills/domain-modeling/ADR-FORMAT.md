@@ -18,13 +18,22 @@ That's it. An ADR can be a single paragraph. The value is in recording *that* a 
 
 Only include these when they add genuine value. Most ADRs won't need them.
 
-- **Status** frontmatter (`proposed | accepted | deprecated | superseded by ADR-NNNN`): useful when decisions are revisited
+- **Status** frontmatter (`proposed | accepted`): useful while a decision is still being discussed. A reversed ADR is deleted, not marked deprecated or superseded; see below.
 - **Considered Options**: only when the rejected alternatives are worth remembering
 - **Consequences**: only when non-obvious downstream effects need to be called out
 
 ## Numbering
 
-Scan `docs/adr/` for the highest existing number and increment by one.
+Scan `docs/adr/` for the highest existing number and increment by one. Numbers freed by deleted ADRs are never reused, so gaps are expected.
+
+## Changing an existing ADR
+
+An accepted ADR is never rewritten to say something different. Its number keeps meaning one decision.
+
+- **Reversed.** Write a new ADR with the next number, put the old decision in its Considered Options with why it was dropped, and delete the old file. Git keeps it. A superseded ADR left in `docs/adr/` gets read as current.
+- **Never worth recording, or no longer true.** Delete it. Don't move its content into `AGENTS.md` or coding standards unless an agent couldn't work it out from the code.
+- **Wording.** Edit in place to match the glossary. That's the only edit an ADR gets.
+- **Trimming.** Cut rationale prose first. Keep Consequences that tell a reader what to do and rejected options: they are what stop the next engineer from "fixing" something deliberate. A new rule found while trimming goes in a new ADR, not the old one.
 
 ## When to offer an ADR
 
