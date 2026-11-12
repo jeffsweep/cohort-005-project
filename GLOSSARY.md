@@ -108,3 +108,7 @@ _Avoid_: Question (on its own)
 **Notification**:
 A message in a person's in-app feed that points at something that happened on Cadence. It only points: whatever it says is also shown elsewhere in Cadence, so missing one, seeing one twice or never reading one costs nobody money or access. Nobody gets a Notification about something they did themselves.
 _Avoid_: Alert, Activity, Message
+
+**Muted**:
+A kind of Notification a person has turned off. They don't get it at all, and turning it back on doesn't bring back the ones they missed.
+_Avoid_: Unsubscribed, Disabled, Snoozed
