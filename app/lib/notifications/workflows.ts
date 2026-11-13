@@ -16,17 +16,19 @@ export type WorkflowDefinition = {
 
 export type GeneratedWorkflow = { key: string; workflow: WorkflowDefinition };
 
-const inAppStep: Step = {
-  ref: "in_app_feed_1",
-  name: "In-app feed",
-  type: "channel",
-  channel_key: "in-app",
-  template: {
-    markdown_body: "{{ data.message }}",
-    // Knock requires an action_url on in-app steps.
-    action_url: "{{ data.url }}",
-  },
-};
+function inAppStep(markdownBody = "{{ data.message }}"): Step {
+  return {
+    ref: "in_app_feed_1",
+    name: "In-app feed",
+    type: "channel",
+    channel_key: "in-app",
+    template: {
+      markdown_body: markdownBody,
+      // Knock requires an action_url on in-app steps.
+      action_url: "{{ data.url }}",
+    },
+  };
+}
 
 const batchPerCourseStep: Step = {
   ref: "batch_1",
@@ -52,7 +54,9 @@ export function generateWorkflows(
       $schema: "https://schemas.knock.app/cli/workflow.json",
       name: kind.name,
       ...(kind.alwaysOn && { settings: { override_preferences: true } }),
-      steps: kind.batched ? [batchPerCourseStep, inAppStep] : [inAppStep],
+      steps: kind.batched
+        ? [batchPerCourseStep, inAppStep(kind.markdownBody)]
+        : [inAppStep(kind.markdownBody)],
     },
   }));
 }
