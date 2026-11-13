@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { useFetcher } from "react-router";
+import { useFetcher, useLocation } from "react-router";
 import { toast } from "sonner";
 import { MessageSquare, Pencil, Reply, Trash2 } from "lucide-react";
 import { Button } from "~/components/ui/button";
@@ -209,8 +209,11 @@ function CommentItem({
   const isAuthor = currentUserId !== null && comment.author.id === currentUserId;
 
   // Notifications link to #comment-<id> (see the discussion builder), so each
-  // post and reply is an anchor.
+  // post and reply is an anchor. The highlight follows the URL's hash rather
+  // than CSS :target, which only updates on a full page load, not when a
+  // Notification is clicked inside the app.
   const anchorId = `comment-${comment.id}`;
+  const linkedTo = useLocation().hash === `#${anchorId}`;
 
   if (comment.deleted) {
     return (
@@ -232,7 +235,8 @@ function CommentItem({
     <div
       id={anchorId}
       className={cn(
-        "scroll-mt-6 rounded-md py-3 target:bg-primary/5",
+        "scroll-mt-6 rounded-md py-3",
+        linkedTo && "bg-primary/5",
         isReply && "border-l pl-4"
       )}
     >

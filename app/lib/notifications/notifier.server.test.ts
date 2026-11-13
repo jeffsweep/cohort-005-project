@@ -77,6 +77,27 @@ describe("notify", () => {
     expect(error).toHaveBeenCalledTimes(1);
     expect(readdirSync(directory)).toHaveLength(1);
   });
+
+  it("starts every send at once, so many recipients don't keep the action waiting", async () => {
+    const started: string[] = [];
+    let release = () => {};
+    const gate = new Promise<void>((resolve) => (release = resolve));
+    const slow: NotificationTransport = {
+      async send(send) {
+        started.push(send.dedupKey);
+        await gate;
+      },
+      async withdraw() {},
+    };
+    const second = { ...samEnrolled, dedupKey: "enrolled:8" };
+
+    const sending = notify([samEnrolled, second], slow);
+    await Promise.resolve();
+
+    expect(started).toEqual(["enrolled:7", "enrolled:8"]);
+    release();
+    await sending;
+  });
 });
 
 describe("knockTransport", () => {

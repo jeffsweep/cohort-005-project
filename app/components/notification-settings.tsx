@@ -1,5 +1,5 @@
 import { useEffect, useId, useRef, useState, type ReactNode } from "react";
-import { useFetcher } from "react-router";
+import { useFetcher, useLocation } from "react-router";
 import { useKnockClient } from "@knocklabs/react-core";
 import { Card, CardContent, CardHeader } from "~/components/ui/card";
 import { Switch } from "~/components/ui/switch";
@@ -112,6 +112,17 @@ function LoadedKnockToggles({ audience }: { audience: Audience }) {
       cancelled = true;
     };
   }, [knock]);
+
+  // The gear on /notifications links to #notifications, but the page scrolls
+  // while these toggles are still loading and too short to bring the section
+  // up. Scroll again once they're in.
+  const { hash } = useLocation();
+  const loaded = state.status !== "loading";
+  useEffect(() => {
+    if (loaded && hash === `#${NOTIFICATION_SETTINGS_ID}`) {
+      document.getElementById(NOTIFICATION_SETTINGS_ID)?.scrollIntoView();
+    }
+  }, [loaded, hash]);
 
   if (state.status === "loading") return <Note>Loading…</Note>;
   if (state.status === "error") {

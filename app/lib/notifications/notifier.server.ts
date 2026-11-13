@@ -139,13 +139,17 @@ export async function notify(
     return;
   }
 
-  for (const send of built) {
-    try {
-      await transport.send(send);
-    } catch (error) {
-      console.error(`Notification ${send.dedupKey} was not sent`, error);
-    }
-  }
+  // All at once: a new lesson can go to every enrolled Student, and the action
+  // shouldn't wait for them one by one.
+  await Promise.all(
+    built.map(async (send) => {
+      try {
+        await transport.send(send);
+      } catch (error) {
+        console.error(`Notification ${send.dedupKey} was not sent`, error);
+      }
+    })
+  );
 }
 
 /**
