@@ -13,6 +13,8 @@ import {
 /**
  * A course rated, or re-rated with different stars: tell its Instructor.
  * `previousStars` is the rating before this write, or null for a first rating.
+ * The dedup key carries the write's time, so going back to stars given before
+ * is told again rather than dropped as a repeat.
  */
 export function buildCourseRated(
   db: Db,
@@ -52,7 +54,7 @@ export function buildCourseRated(
       {
         workflow: "course-rated",
         recipient: recipientOf(instructor),
-        dedupKey: `course-rated:${rating.id}:${rating.rating}`,
+        dedupKey: `course-rated:${rating.id}:${rating.rating}:${rating.updatedAt}`,
         data: {
           actorName,
           message,

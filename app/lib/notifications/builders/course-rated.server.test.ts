@@ -14,17 +14,19 @@ beforeEach(() => {
   base = seedBaseData(db);
 });
 
+const RATED_AT = "2026-11-01T10:00:00.000Z";
+
 function rate(userId: number, rating: number) {
   return db
     .insert(schema.courseRatings)
-    .values({ userId, courseId: base.course.id, rating })
+    .values({ userId, courseId: base.course.id, rating, updatedAt: RATED_AT })
     .returning()
     .get();
 }
 
-function rerate(ratingId: number, rating: number) {
+function rerate(ratingId: number, rating: number, updatedAt: string) {
   db.update(schema.courseRatings)
-    .set({ rating })
+    .set({ rating, updatedAt })
     .where(eq(schema.courseRatings.id, ratingId))
     .run();
 }
@@ -39,7 +41,7 @@ describe("course-rated", () => {
       {
         workflow: "course-rated",
         recipient: { id: String(base.instructor.id), name: "Test Instructor" },
-        dedupKey: `course-rated:${rating.id}:4`,
+        dedupKey: `course-rated:${rating.id}:4:${RATED_AT}`,
         data: {
           actorName: "Test User",
           message: "Test User rated *Test Course* 4★",
@@ -51,7 +53,7 @@ describe("course-rated", () => {
 
   it("says the Student changed their rating when they re-rate with different stars", () => {
     const rating = rate(base.user.id, 4);
-    rerate(rating.id, 2);
+    rerate(rating.id, 2, "2026-11-02T10:00:00.000Z");
 
     expect(
       buildCourseRated(db, { ratingId: rating.id, previousStars: 4 })
@@ -59,7 +61,7 @@ describe("course-rated", () => {
       {
         workflow: "course-rated",
         recipient: { id: String(base.instructor.id), name: "Test Instructor" },
-        dedupKey: `course-rated:${rating.id}:2`,
+        dedupKey: `course-rated:${rating.id}:2:2026-11-02T10:00:00.000Z`,
         data: {
           actorName: "Test User",
           message: "Test User changed their rating of *Test Course* to 2★",
@@ -67,6 +69,26 @@ describe("course-rated", () => {
         },
       },
     ]);
+  });
+
+  it("tells the Instructor again when a Student goes back to stars they gave before", () => {
+    const rating = rate(base.user.id, 4);
+    const [first] = buildCourseRated(db, {
+      ratingId: rating.id,
+      previousStars: null,
+    });
+    rerate(rating.id, 2, "2026-11-02T10:00:00.000Z");
+    rerate(rating.id, 4, "2026-11-03T10:00:00.000Z");
+
+    const [back] = buildCourseRated(db, {
+      ratingId: rating.id,
+      previousStars: 2,
+    });
+
+    expect(back.dedupKey).not.toBe(first.dedupKey);
+    expect(back.data.message).toBe(
+      "Test User changed their rating of *Test Course* to 4★"
+    );
   });
 
   it("sends nothing when the Student re-rates with the same stars", () => {
