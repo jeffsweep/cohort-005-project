@@ -6,6 +6,7 @@ import type { Route } from "./+types/courses.$slug.purchase";
 import { getCurrentUserId } from "~/lib/session";
 import { notify } from "~/lib/notifications/notifier.server";
 import { buildEnrolled } from "~/lib/notifications/builders/enrolled.server";
+import { buildTeamLicenceBought } from "~/lib/notifications/builders/team-licence-bought.server";
 import { db } from "~/db";
 import {
   courses,
@@ -378,7 +379,14 @@ export async function action({ params, request }: Route.ActionArgs) {
   // Team purchase — user does NOT get enrolled themselves
   const { quantity } = parsed.data;
   const totalPrice = pppPrice * quantity;
-  createTeamPurchase(currentUserId, course.id, totalPrice, country, quantity);
+  const { purchase } = createTeamPurchase(
+    currentUserId,
+    course.id,
+    totalPrice,
+    country,
+    quantity
+  );
+  await notify(() => buildTeamLicenceBought(db, { purchaseId: purchase.id }));
   throw redirect(`/team`);
 }
 

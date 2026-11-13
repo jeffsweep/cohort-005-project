@@ -42,6 +42,22 @@ export const NOTIFICATION_KINDS = [
     batched: false,
   },
   {
+    key: "team-licence-bought",
+    name: "Team Licence bought",
+    label: "someone buys a Team Licence for my course",
+    group: "My courses",
+    alwaysOn: false,
+    batched: false,
+  },
+  {
+    key: "seat-claimed",
+    name: "Seat claimed",
+    label: "someone claims a Seat on my team",
+    group: "My teams",
+    alwaysOn: false,
+    batched: false,
+  },
+  {
     key: "lesson-added",
     name: "Lesson added",
     label: "new lessons are added to a course I'm enrolled on",
