@@ -36,6 +36,38 @@ export const NOTIFICATION_KINDS = [
     alwaysOn: false,
     batched: false,
   },
+  {
+    key: "refund-requested",
+    name: "Refund requested",
+    label: "someone asks for a refund",
+    group: "Platform",
+    alwaysOn: false,
+    batched: false,
+  },
+  {
+    key: "refund-approved",
+    name: "Refund approved",
+    label: "my Refund Request is approved",
+    group: "Platform",
+    alwaysOn: true,
+    batched: false,
+  },
+  {
+    key: "refund-approved-instructor",
+    name: "Refund approved (Instructor)",
+    label: "Cadence refunds a purchase of my course",
+    group: "My courses",
+    alwaysOn: false,
+    batched: false,
+  },
+  {
+    key: "refund-declined",
+    name: "Refund declined",
+    label: "my Refund Request is declined",
+    group: "Platform",
+    alwaysOn: true,
+    batched: false,
+  },
 ] as const satisfies readonly NotificationKind[];
 
 export type NotificationKey = (typeof NOTIFICATION_KINDS)[number]["key"];

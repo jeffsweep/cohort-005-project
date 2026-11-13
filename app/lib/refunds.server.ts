@@ -465,44 +465,68 @@ export function listRefundRequestsForReview(
   status: RefundStatus,
   now: Date
 ): RefundRequestForReview[] {
-  const rows = selectRefundRequests(db)
+  return selectRefundRequests(db)
     .where(eq(refunds.status, status))
     .orderBy(asc(refunds.requestedAt), asc(refunds.id))
-    .all();
+    .all()
+    .map((row) => toRefundRequestForReview(db, row, now));
+}
 
-  return rows.map((row) => {
-    const figures = getRefundFigures(db, row.purchase);
-    const ruleBreaks = findRuleBreaks(
-      row.purchase,
-      figures,
-      new Date(row.requestedAt)
-    );
-    const msSincePurchase =
-      now.getTime() - new Date(row.purchase.createdAt).getTime();
+/**
+ * One Refund Request for review, whatever its status, or null if there is
+ * no such request. A refund-requested Notification links here.
+ */
+export function getRefundRequestForReview(
+  db: Queryable,
+  refundRequestId: number,
+  now: Date
+): RefundRequestForReview | null {
+  const row = selectRefundRequests(db)
+    .where(eq(refunds.id, refundRequestId))
+    .get();
+  return row ? toRefundRequestForReview(db, row, now) : null;
+}
 
-    return {
-      id: row.id,
-      status: row.status,
-      reason: row.reason,
-      decisionNote: row.decisionNote,
-      requestedAt: row.requestedAt,
-      resolvedAt: row.resolvedAt,
-      decidedByName: row.decidedByName,
-      buyerName: row.buyerName,
-      buyerEmail: row.buyerEmail,
-      courseTitle: row.courseTitle,
-      courseSlug: row.courseSlug,
-      amountPaid: row.purchase.amountPaid,
-      purchasedAt: row.purchase.createdAt,
-      daysSincePurchase: Math.max(0, Math.floor(msSincePurchase / 86_400_000)),
-      figures,
-      ruleBreaks,
-      // A Claimed Seat belongs to another student, so the only way out of
-      // that request is a decline. See docs/adr/0003.
-      canApprove:
-        row.status === RefundStatus.Open && !ruleBreaks.includes("seat_claimed"),
-    };
-  });
+type RefundRequestRow = ReturnType<
+  ReturnType<typeof selectRefundRequests>["all"]
+>[number];
+
+function toRefundRequestForReview(
+  db: Queryable,
+  row: RefundRequestRow,
+  now: Date
+): RefundRequestForReview {
+  const figures = getRefundFigures(db, row.purchase);
+  const ruleBreaks = findRuleBreaks(
+    row.purchase,
+    figures,
+    new Date(row.requestedAt)
+  );
+  const msSincePurchase =
+    now.getTime() - new Date(row.purchase.createdAt).getTime();
+
+  return {
+    id: row.id,
+    status: row.status,
+    reason: row.reason,
+    decisionNote: row.decisionNote,
+    requestedAt: row.requestedAt,
+    resolvedAt: row.resolvedAt,
+    decidedByName: row.decidedByName,
+    buyerName: row.buyerName,
+    buyerEmail: row.buyerEmail,
+    courseTitle: row.courseTitle,
+    courseSlug: row.courseSlug,
+    amountPaid: row.purchase.amountPaid,
+    purchasedAt: row.purchase.createdAt,
+    daysSincePurchase: Math.max(0, Math.floor(msSincePurchase / 86_400_000)),
+    figures,
+    ruleBreaks,
+    // A Claimed Seat belongs to another student, so the only way out of
+    // that request is a decline. See docs/adr/0003.
+    canApprove:
+      row.status === RefundStatus.Open && !ruleBreaks.includes("seat_claimed"),
+  };
 }
 
 /** A buyer's own Refund Requests, newest first, for their Settings page. */

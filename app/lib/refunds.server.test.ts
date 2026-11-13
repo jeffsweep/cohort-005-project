@@ -8,6 +8,7 @@ import {
   checkRefundRequest,
   declineRefundRequest,
   getRefundOffer,
+  getRefundRequestForReview,
   getSeatAvailability,
   listRefundRequestsForBuyer,
   listRefundRequestsForReview,
@@ -478,6 +479,27 @@ describe("listing Refund Requests", () => {
     expect(
       listRefundRequestsForReview(db, RefundStatus.Approved, NOW)
     ).toMatchObject([{ id: firstId, decidedByName: "Pat Admin" }]);
+  });
+
+  it("shows a Platform Admin one Refund Request on its own, whatever its status", () => {
+    const first = buyForSelf(base.user.id);
+    const ben = addLearner("Ben");
+    const firstId = raise(first.id, base.user.id);
+    const secondId = raise(buyForSelf(ben.id).id, ben.id);
+    approveRefundRequest(db, firstId, platformAdmin.id, null, NOW);
+
+    expect(getRefundRequestForReview(db, secondId, NOW)).toMatchObject({
+      id: secondId,
+      buyerName: "Ben",
+      status: RefundStatus.Open,
+    });
+    expect(getRefundRequestForReview(db, firstId, NOW)).toMatchObject({
+      id: firstId,
+      status: RefundStatus.Approved,
+      decidedByName: "Pat Admin",
+      canApprove: false,
+    });
+    expect(getRefundRequestForReview(db, 999, NOW)).toBeNull();
   });
 
   it("shows a buyer their decided requests with the decline note", () => {

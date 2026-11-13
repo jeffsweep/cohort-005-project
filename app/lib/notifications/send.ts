@@ -24,4 +24,16 @@ export type SendData = {
   url: string;
   /** Only for `lesson-added`, which Knock batches per course. */
   courseId?: number;
+  /** Only for `refund-requested`, so its copies can be withdrawn once decided. */
+  refundRequestId?: number;
+};
+
+/**
+ * Takes back every copy of a kind of Notification, whoever it went to, once
+ * it no longer needs acting on. The copies are found by their workflow and by
+ * values in their `data` (Knock's trigger data).
+ */
+export type Withdrawal = {
+  workflow: NotificationKey;
+  triggerData: Partial<SendData>;
 };
