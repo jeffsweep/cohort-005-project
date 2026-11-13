@@ -80,7 +80,7 @@ describe("notify", () => {
 });
 
 describe("knockTransport", () => {
-  it("triggers the kind's workflow with the dedup key as Idempotency-Key", async () => {
+  it("triggers the kind's workflow with the dedup key and recipient as Idempotency-Key", async () => {
     const fetch = vi.fn(async () => new Response("{}", { status: 200 }));
 
     await knockTransport("sk_test", fetch).send(samEnrolled);
@@ -91,12 +91,31 @@ describe("knockTransport", () => {
     expect(init.method).toBe("POST");
     expect(init.headers).toMatchObject({
       Authorization: "Bearer sk_test",
-      "Idempotency-Key": "enrolled:7",
+      "Idempotency-Key": "enrolled:7:to:2",
     });
     expect(JSON.parse(String(init.body))).toEqual({
       recipients: [{ id: "2", name: "Test Instructor" }],
       data: samEnrolled.data,
     });
+  });
+
+  it("gives each recipient of one event its own Idempotency-Key, and the same recipient the same key", async () => {
+    const fetch = vi.fn(async () => new Response("{}", { status: 200 }));
+    const transport = knockTransport("sk_test", fetch);
+    const toOtherAdmin: Send = {
+      ...samEnrolled,
+      recipient: { id: "5", name: "Other Admin" },
+    };
+
+    await transport.send(samEnrolled);
+    await transport.send(toOtherAdmin);
+    await transport.send(samEnrolled);
+
+    const keys = fetch.mock.calls.map((call) => {
+      const [, init] = call as unknown as [string, RequestInit];
+      return (init.headers as Record<string, string>)["Idempotency-Key"];
+    });
+    expect(keys).toEqual(["enrolled:7:to:2", "enrolled:7:to:5", "enrolled:7:to:2"]);
   });
 
   it("throws when Knock rejects the trigger, so notify can log it", async () => {

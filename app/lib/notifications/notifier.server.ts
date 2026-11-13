@@ -40,7 +40,10 @@ export function knockTransport(
           headers: {
             ...headers,
             // Knock owns deduplication: a repeated key within 24 h is dropped.
-            "Idempotency-Key": send.dedupKey,
+            // One event can reach several people, each with its own trigger,
+            // and Knock rejects a reused key with a different body, so the
+            // key names the recipient too.
+            "Idempotency-Key": idempotencyKey(send),
           },
           body: JSON.stringify({
             recipients: [send.recipient],
@@ -81,6 +84,10 @@ export function knockTransport(
       }
     },
   };
+}
+
+function idempotencyKey(send: Send): string {
+  return `${send.dedupKey}:to:${send.recipient.id}`;
 }
 
 export function outboxTransport(directory: string): NotificationTransport {
