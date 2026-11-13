@@ -36,6 +36,22 @@ export const NOTIFICATION_KINDS = [
     alwaysOn: false,
     batched: false,
   },
+  {
+    key: "team-licence-bought",
+    name: "Team Licence bought",
+    label: "someone buys a Team Licence for my course",
+    group: "My courses",
+    alwaysOn: false,
+    batched: false,
+  },
+  {
+    key: "seat-claimed",
+    name: "Seat claimed",
+    label: "someone claims a Seat on my team",
+    group: "My teams",
+    alwaysOn: false,
+    batched: false,
+  },
 ] as const satisfies readonly NotificationKind[];
 
 export type NotificationKey = (typeof NOTIFICATION_KINDS)[number]["key"];
