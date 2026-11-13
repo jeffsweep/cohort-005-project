@@ -11,6 +11,10 @@ export type FeedItemLike = {
   inserted_at: string;
   read_at: string | null;
   data: Partial<SendData> | null;
+  /** The workflow that sent it. */
+  source?: { key: string };
+  /** How many sends Knock batched into this item. */
+  total_activities?: number;
 };
 
 export type WordingPart = { text: string; italic: boolean };
@@ -28,7 +32,8 @@ export type FeedRow = {
 export function feedRow(item: FeedItemLike, now: Date = new Date()): FeedRow {
   // The sentence Cadence sent. Knock's blocks hold the template
   // ("{{ data.message }}") as `content` and HTML as `rendered`, not Markdown.
-  const sentence = item.data?.message ?? "";
+  const sentence =
+    item.source?.key === "lesson-added" ? lessonsAddedSentence(item) : (item.data?.message ?? "");
   const actorName = item.data?.actorName ?? "Cadence";
   const startsWithActor = sentence.startsWith(`${actorName} `);
 
@@ -40,6 +45,15 @@ export function feedRow(item: FeedItemLike, now: Date = new Date()): FeedRow {
     read: item.read_at !== null,
     time: relativeTime(item.inserted_at, now),
   };
+}
+
+/**
+ * Knock batches `lesson-added` per course, and the item's `data` is one send's.
+ * Same wording as the kind's workflow template in the catalogue.
+ */
+function lessonsAddedSentence(item: FeedItemLike): string {
+  const count = item.total_activities ?? 1;
+  return `${count} new ${count === 1 ? "lesson" : "lessons"} on ${item.data?.courseTitle ?? ""}`;
 }
 
 /** The Markdown builders write: `*italic*` with `\` escapes, nothing else. */
@@ -73,6 +87,29 @@ export function relativeTime(insertedAt: string, now: Date = new Date()): string
   if (minutes < 60) return `${minutes}m`;
   if (minutes < 60 * 24) return `${Math.floor(minutes / 60)}h`;
   return `${Math.floor(minutes / (60 * 24))}d`;
+}
+
+export type DayGroup<T> = { label: "Today" | "Earlier"; items: T[] };
+
+/**
+ * The full page's groups: since the reader's local midnight, then the rest.
+ * Keeps the order given (Knock's, newest first) and leaves out empty groups.
+ */
+export function groupByDay<T extends Pick<FeedItemLike, "inserted_at">>(
+  items: T[],
+  now: Date = new Date()
+): DayGroup<T>[] {
+  const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const groups: DayGroup<T>[] = [
+    { label: "Today", items: items.filter((item) => Date.parse(item.inserted_at) >= midnight) },
+    { label: "Earlier", items: items.filter((item) => Date.parse(item.inserted_at) < midnight) },
+  ];
+  return groups.filter((group) => group.items.length > 0);
+}
+
+/** The full page's line under its heading. */
+export function unreadSummary(unreadCount: number): string {
+  return unreadCount === 0 ? "You're all caught up" : `${unreadCount} unread`;
 }
 
 /** The bell's accessible label and tooltip. */

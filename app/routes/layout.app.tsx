@@ -2,6 +2,7 @@ import { Outlet } from "react-router";
 import type { Route } from "./+types/layout.app";
 import { Sidebar } from "~/components/sidebar";
 import { DevUI } from "~/components/dev-ui";
+import { NotificationFeedProvider } from "~/components/notification-feed";
 import { Toaster } from "sonner";
 import { getCurrentUserId, getDevCountry } from "~/lib/session";
 import { getCountryTierInfo, COUNTRIES } from "~/lib/ppp";
@@ -232,15 +233,17 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
 
   return (
     <div className="flex h-screen overflow-hidden">
-      <Sidebar
-        currentUser={currentUser}
-        recentCourses={recentCourses}
-        isTeamAdmin={userIsTeamAdmin}
-        notificationFeed={notificationFeed}
-      />
-      <main className="flex-1 overflow-y-auto">
-        <Outlet />
-      </main>
+      {/* One feed for the bell and the all-notifications page. */}
+      <NotificationFeedProvider feed={notificationFeed}>
+        <Sidebar
+          currentUser={currentUser}
+          recentCourses={recentCourses}
+          isTeamAdmin={userIsTeamAdmin}
+        />
+        <main className="flex-1 overflow-y-auto">
+          <Outlet />
+        </main>
+      </NotificationFeedProvider>
       <DevUI
         users={users}
         currentUser={currentUser}

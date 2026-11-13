@@ -12,7 +12,8 @@ import {
 } from "~/lib/notifications/toasts";
 
 // ─── Live updates and toasts ───
-// Knock's provider already opens the real-time connection when the bell mounts
+// Called from FeedState (notification-feed.tsx), shared by the bell and the
+// /notifications page. Knock's provider already opens the real-time connection
 // (useNotifications calls listenForUpdates), so new items land at the top of
 // the store, unread, and the dot and count follow. This hook adds:
 //   - a silent refetch when the connection reopens or the tab becomes visible

@@ -1,113 +1,35 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { useNavigate } from "react-router";
-import {
-  KnockFeedProvider,
-  KnockProvider,
-  useKnockFeed,
-} from "@knocklabs/react-core";
+import type { ReactNode } from "react";
+import { Link, useNavigate } from "react-router";
 import { Bell, CheckCheck } from "lucide-react";
 import { cn } from "~/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
+import { useBellPopover, useNotificationFeed } from "~/components/notification-feed";
 import { feedRow, unreadLabel, type FeedRow } from "~/lib/notifications/feed-row";
-import type { FeedIdentity } from "~/lib/notifications/feed-identity.server";
-import { FEED_OPTIONS, useLiveFeed } from "~/components/notification-live";
 
 // ─── The bell ───
 // Sits in the sidebar's logo row for a signed-in person. Reads their feed
-// from Knock in the browser with headless hooks; the markup is Cadence's own.
-// Without keys it says "Notifications aren't set up" (never naming the
-// service); if the feed can't load it says so and shows no dot.
+// (see notification-feed.tsx); the markup is Cadence's own. Without keys it
+// says "Notifications aren't set up" (never naming the service); if the feed
+// can't load it says so and shows no dot.
 
-const REFRESH_BEFORE_EXPIRY_MS = 5 * 60 * 1000;
-
-export function NotificationBell({ feed }: { feed: FeedIdentity | null }) {
-  // Knock only runs in the browser: no client, fetch or socket during SSR.
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => setMounted(true), []);
-
-  if (!feed) return <BellShell unread={0} body={<Message>Notifications aren't set up.</Message>} />;
-  if (!mounted) return <BellShell unread={0} body={null} />;
-
-  // Keyed by user, so switching users never shows the previous user's feed.
-  return <KnockBell key={feed.userId} feed={feed} />;
-}
-
-function KnockBell({ feed }: { feed: FeedIdentity }) {
-  // The layout loader signs a new token on every navigation. Keep the first
-  // one: handing Knock a new token reconnects the feed. Knock asks for a
-  // fresh one before it expires.
-  const [initialToken] = useState(feed.userToken);
-
-  return (
-    <KnockProvider
-      apiKey={feed.publicKey}
-      user={{ id: feed.userId }}
-      identificationStrategy="skip"
-      userToken={initialToken}
-      onUserTokenExpiring={() => refreshToken(feed.userId)}
-      timeBeforeExpirationInMs={REFRESH_BEFORE_EXPIRY_MS}
-    >
-      <KnockFeedProvider feedId={feed.feedChannelId} defaultFeedOptions={FEED_OPTIONS}>
-        <KnockFeedBell />
-      </KnockFeedProvider>
-    </KnockProvider>
-  );
-}
-
-async function refreshToken(userId: string): Promise<string | void> {
-  try {
-    const response = await fetch(
-      `/api/knock-token?userId=${encodeURIComponent(userId)}`
-    );
-    // Another tab switched the user: reload rather than mix identities.
-    if (response.status === 409) {
-      window.location.reload();
-      return;
-    }
-    // No user or no keys: stop asking.
-    if (!response.ok) return;
-    const body: { userToken: string } = await response.json();
-    return body.userToken;
-  } catch {
-    return;
-  }
-}
-
-function KnockFeedBell() {
-  const { feedClient, useFeedStore } = useKnockFeed();
-  const { items, metadata, networkStatus } = useFeedStore();
-  const [failed, setFailed] = useState(false);
+export function NotificationBell() {
+  const feed = useNotificationFeed();
   const navigate = useNavigate();
-  const [open, setOpen] = useState(false);
-  // Toasts are on for everyone in Phase 1; #29 passes the "Show toasts" setting.
-  useLiveFeed({ popoverOpen: open, openPopover: () => setOpen(true), toastsOn: true });
+  const { open, setOpen } = useBellPopover();
 
-  useEffect(() => {
-    let cancelled = false;
-    feedClient
-      .fetch()
-      .then((result) => {
-        if (!cancelled && result?.status === "error") setFailed(true);
-      })
-      .catch(() => {
-        if (!cancelled) setFailed(true);
-      });
-    return () => {
-      cancelled = true;
-    };
-  }, [feedClient]);
-
-  if (failed || networkStatus === "error") {
+  if (feed.status === "not-set-up") {
+    return <BellShell unread={0} body={<Message>Notifications aren't set up.</Message>} />;
+  }
+  if (feed.status === "error") {
     return <BellShell unread={0} body={<Message>Couldn't load notifications.</Message>} />;
   }
+  if (feed.status === "loading") return <BellShell unread={0} body={null} />;
 
-  const rows = items.map((item) => feedRow(item));
-  const unread = metadata.unread_count;
-  const loading = networkStatus === "loading" && items.length === 0;
+  const rows = feed.items.map((item) => feedRow(item));
+  const { unread, markAsRead } = feed;
 
   function openRow(row: FeedRow) {
-    const item = items.find((candidate) => candidate.id === row.id);
-    if (item && !row.read) void feedClient.markAsRead(item);
+    if (!row.read) markAsRead(row.id);
     setOpen(false);
     navigate(row.url);
   }
@@ -117,10 +39,11 @@ function KnockFeedBell() {
       unread={unread}
       open={open}
       onOpenChange={setOpen}
-      onMarkAllRead={unread > 0 ? () => void feedClient.markAllAsRead() : undefined}
+      onMarkAllRead={unread > 0 ? feed.markAllAsRead : undefined}
+      onViewAll={() => setOpen(false)}
       body={
-        loading ? null : rows.length === 0 ? (
-          <Message>Nothing new. You'll see enrollments, replies and refunds here.</Message>
+        rows.length === 0 ? (
+          <Message>{EMPTY_FEED}</Message>
         ) : (
           rows.map((row) => <Row key={row.id} row={row} onOpen={openRow} />)
         )
@@ -129,18 +52,22 @@ function KnockFeedBell() {
   );
 }
 
+export const EMPTY_FEED = "Nothing new. You'll see enrollments, replies and refunds here.";
+
 function BellShell({
   unread,
   body,
   open,
   onOpenChange,
   onMarkAllRead,
+  onViewAll,
 }: {
   unread: number;
   body: ReactNode;
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
   onMarkAllRead?: () => void;
+  onViewAll?: () => void;
 }) {
   const label = unreadLabel(unread);
   return (
@@ -176,12 +103,19 @@ function BellShell({
           </button>
         </div>
         <div className="max-h-[28rem] overflow-y-auto p-1">{body}</div>
+        <Link
+          to="/notifications"
+          onClick={onViewAll}
+          className="block border-t px-4 py-2.5 text-center text-xs font-medium text-muted-foreground hover:bg-accent hover:text-accent-foreground"
+        >
+          View all notifications
+        </Link>
       </PopoverContent>
     </Popover>
   );
 }
 
-function Row({ row, onOpen }: { row: FeedRow; onOpen: (row: FeedRow) => void }) {
+export function Row({ row, onOpen }: { row: FeedRow; onOpen: (row: FeedRow) => void }) {
   return (
     <button
       type="button"
@@ -212,7 +146,7 @@ function Row({ row, onOpen }: { row: FeedRow; onOpen: (row: FeedRow) => void }) 
   );
 }
 
-function Message({ children }: { children: ReactNode }) {
+export function Message({ children }: { children: ReactNode }) {
   return (
     <div className="px-4 py-10 text-center text-sm text-muted-foreground">{children}</div>
   );
