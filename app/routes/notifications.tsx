@@ -1,5 +1,6 @@
-import { data, useNavigate } from "react-router";
-import { CheckCheck } from "lucide-react";
+import { data, Link, useNavigate } from "react-router";
+import { CheckCheck, Settings } from "lucide-react";
+import { NOTIFICATION_SETTINGS_ID } from "~/components/notification-settings";
 import type { Route } from "./+types/notifications";
 import { getCurrentUserId } from "~/lib/session";
 import { Card } from "~/components/ui/card";
@@ -51,14 +52,25 @@ export default function Notifications() {
           <h1 className="text-3xl font-bold">Notifications</h1>
           {ready && <p className="mt-1 text-muted-foreground">{unreadSummary(ready.unread)}</p>}
         </div>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={ready?.markAllAsRead}
-          disabled={!ready || ready.unread === 0}
-        >
-          <CheckCheck className="size-4" /> Mark all as read
-        </Button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={ready?.markAllAsRead}
+            disabled={!ready || ready.unread === 0}
+          >
+            <CheckCheck className="size-4" /> Mark all as read
+          </Button>
+          <Button variant="ghost" size="icon" asChild>
+            <Link
+              to={`/settings#${NOTIFICATION_SETTINGS_ID}`}
+              aria-label="Notification settings"
+              title="Notification settings"
+            >
+              <Settings className="size-4" />
+            </Link>
+          </Button>
+        </div>
       </div>
 
       {feed.status === "not-set-up" ? (

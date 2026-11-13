@@ -40,6 +40,16 @@ export function useBellPopover(): BellPopover {
   return useContext(BellPopoverContext);
 }
 
+/** Whether Knock's client is available to children: "not-set-up" without
+ *  keys or user, "starting" until hydration mounts the provider. Only under
+ *  "ready" may a child call `useKnockClient()`. */
+export type KnockAvailability = "not-set-up" | "starting" | "ready";
+const KnockAvailabilityContext = createContext<KnockAvailability>("not-set-up");
+
+export function useKnockAvailability(): KnockAvailability {
+  return useContext(KnockAvailabilityContext);
+}
+
 const REFRESH_BEFORE_EXPIRY_MS = 5 * 60 * 1000;
 
 /** The person's "Show toasts" setting, from the layout loader. */
@@ -72,13 +82,19 @@ function FeedFor({ feed, children }: { feed: FeedIdentity | null; children: Reac
     return <FeedStateContext.Provider value={{ status: "not-set-up" }}>{children}</FeedStateContext.Provider>;
   }
   if (!mounted) {
-    return <FeedStateContext.Provider value={{ status: "loading" }}>{children}</FeedStateContext.Provider>;
+    return (
+      <KnockAvailabilityContext.Provider value="starting">
+        <FeedStateContext.Provider value={{ status: "loading" }}>{children}</FeedStateContext.Provider>
+      </KnockAvailabilityContext.Provider>
+    );
   }
   // Keyed by user, so switching users never shows the previous user's feed.
   return (
-    <KnockFeed key={feed.userId} feed={feed}>
-      {children}
-    </KnockFeed>
+    <KnockAvailabilityContext.Provider value="ready">
+      <KnockFeed key={feed.userId} feed={feed}>
+        {children}
+      </KnockFeed>
+    </KnockAvailabilityContext.Provider>
   );
 }
 

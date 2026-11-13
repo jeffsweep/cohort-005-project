@@ -10,15 +10,22 @@ import { Button } from "~/components/ui/button";
 import { Input } from "~/components/ui/input";
 import { Label } from "~/components/ui/label";
 import { Textarea } from "~/components/ui/textarea";
-import { UserRole, RefundStatus, users } from "~/db/schema";
+import {
+  UserRole,
+  RefundStatus,
+  users,
+  teamMembers,
+  TeamMemberRole,
+} from "~/db/schema";
 import { AlertTriangle } from "lucide-react";
 import { data, isRouteErrorResponse, Link } from "react-router";
 import { db } from "~/db";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { formatPrice } from "~/lib/utils";
 import { listRefundRequestsForBuyer } from "~/lib/refunds.server";
 import { setShowToasts } from "~/lib/notifications/show-toasts.server";
 import {
+  KnockToggles,
   NotificationSettings,
   SHOW_TOASTS_INTENT,
 } from "~/components/notification-settings";
@@ -68,6 +75,17 @@ export async function loader({ request }: Route.LoaderArgs) {
       bio: currentUser.bio,
       role: currentUser.role,
     },
+    // Decides which "Tell me when…" toggles show.
+    isTeamAdmin: !!db
+      .select({ id: teamMembers.id })
+      .from(teamMembers)
+      .where(
+        and(
+          eq(teamMembers.userId, currentUserId),
+          eq(teamMembers.role, TeamMemberRole.Admin)
+        )
+      )
+      .get(),
     showToasts: currentUser.showToasts,
     refundRequests,
   };
@@ -116,7 +134,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Settings({ loaderData }: Route.ComponentProps) {
-  const { user, showToasts, refundRequests } = loaderData;
+  const { user, isTeamAdmin, showToasts, refundRequests } = loaderData;
   const openCount = refundRequests.filter(
     (refundRequest) => refundRequest.status === RefundStatus.Open
   ).length;
@@ -206,7 +224,9 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
         </CardContent>
       </Card>
 
-      <NotificationSettings showToasts={showToasts} />
+      <NotificationSettings showToasts={showToasts}>
+        <KnockToggles audience={{ role: user.role, isTeamAdmin }} />
+      </NotificationSettings>
 
       {refundRequests.length > 0 && (
         <Card className="mt-8 max-w-md">
