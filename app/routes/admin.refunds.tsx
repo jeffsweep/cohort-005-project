@@ -17,15 +17,25 @@ import { formatPrice } from "~/lib/utils";
 import {
   approveRefundRequest,
   declineRefundRequest,
+  getRefundRequestForReview,
   listRefundRequestsForReview,
   type RefundRequestForReview,
 } from "~/lib/refunds.server";
 import { RULE_BREAK_LABELS } from "~/lib/refund-rules";
 import { sendEmail } from "~/lib/mailer.server";
+import { notify, withdraw } from "~/lib/notifications/notifier.server";
+import { refundRequestedWithdrawal } from "~/lib/notifications/builders/refund-requested.server";
+import { buildRefundApproved } from "~/lib/notifications/builders/refund-approved.server";
+import { buildRefundApprovedInstructor } from "~/lib/notifications/builders/refund-approved-instructor.server";
+import { buildRefundDeclined } from "~/lib/notifications/builders/refund-declined.server";
 
 const refundFilterSchema = z
   .nativeEnum(RefundStatus)
   .catch(RefundStatus.Open);
+
+// `?request=<id>` shows that one Refund Request, whatever its status. A
+// refund-requested Notification links here.
+const singleRequestSchema = z.coerce.number().int().positive().nullable().catch(null);
 
 const adminRefundActionSchema = z.discriminatedUnion("intent", [
   z.object({
@@ -83,6 +93,22 @@ export function meta() {
 export async function loader({ request, url }: Route.LoaderArgs) {
   await requirePlatformAdmin(request);
 
+  const singleRequestId = singleRequestSchema.parse(
+    url.searchParams.get("request")
+  );
+
+  if (singleRequestId !== null) {
+    const refundRequest = getRefundRequestForReview(
+      db,
+      singleRequestId,
+      new Date()
+    );
+    return {
+      status: null,
+      refundRequests: refundRequest ? [refundRequest] : [],
+    };
+  }
+
   const status = refundFilterSchema.parse(url.searchParams.get("status"));
 
   return {
@@ -128,6 +154,17 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   await sendEmail(result.email);
+  await notify(() =>
+    intent === "approve"
+      ? [
+          ...buildRefundApproved(db, { refundRequestId }),
+          ...buildRefundApprovedInstructor(db, { refundRequestId }),
+        ]
+      : buildRefundDeclined(db, { refundRequestId })
+  );
+  // Nobody needs to act on it any more, so take it out of every Platform
+  // Admin's feed, the decider's included.
+  await withdraw(() => refundRequestedWithdrawal(refundRequestId));
 
   return {
     success: true,
@@ -184,12 +221,20 @@ export default function AdminRefunds({ loaderData }: Route.ComponentProps) {
         ))}
       </div>
 
+      {status === null && (
+        <p className="mb-4 text-sm text-muted-foreground">
+          Showing one refund request. Pick a filter above to see the rest.
+        </p>
+      )}
+
       {refundRequests.length === 0 ? (
         <Card>
           <CardContent className="p-8 text-center">
             <Receipt className="mx-auto mb-3 size-10 text-muted-foreground" />
             <p className="text-muted-foreground">
-              No {status} refund requests.
+              {status === null
+                ? "That refund request doesn't exist."
+                : `No ${status} refund requests.`}
             </p>
           </CardContent>
         </Card>
@@ -288,7 +333,7 @@ function RefundRequestCard({
   }
 
   return (
-    <Card>
+    <Card id={`refund-request-${refundRequest.id}`}>
       <CardContent className="space-y-4 p-5">
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
