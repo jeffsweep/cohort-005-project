@@ -17,6 +17,15 @@ import { db } from "~/db";
 import { eq } from "drizzle-orm";
 import { formatPrice } from "~/lib/utils";
 import { listRefundRequestsForBuyer } from "~/lib/refunds.server";
+import { setShowToasts } from "~/lib/notifications/show-toasts.server";
+import {
+  NotificationSettings,
+  SHOW_TOASTS_INTENT,
+} from "~/components/notification-settings";
+
+const showToastsSchema = z.object({
+  on: z.enum(["true", "false"]),
+});
 
 const settingsSchema = z.object({
   name: z.string().trim().min(1, "Name cannot be empty."),
@@ -59,6 +68,7 @@ export async function loader({ request }: Route.LoaderArgs) {
       bio: currentUser.bio,
       role: currentUser.role,
     },
+    showToasts: currentUser.showToasts,
     refundRequests,
   };
 }
@@ -80,6 +90,14 @@ export async function action({ request }: Route.ActionArgs) {
   }
 
   const formData = await request.formData();
+
+  if (formData.get("intent") === SHOW_TOASTS_INTENT) {
+    const toggle = parseFormData(formData, showToastsSchema);
+    if (!toggle.success) return data({ ok: false }, { status: 400 });
+    setShowToasts(db, currentUser.id, toggle.data.on === "true");
+    return { ok: true };
+  }
+
   const parsed = parseFormData(formData, settingsSchema);
 
   if (!parsed.success) {
@@ -98,7 +116,7 @@ export async function action({ request }: Route.ActionArgs) {
 }
 
 export default function Settings({ loaderData }: Route.ComponentProps) {
-  const { user, refundRequests } = loaderData;
+  const { user, showToasts, refundRequests } = loaderData;
   const openCount = refundRequests.filter(
     (refundRequest) => refundRequest.status === RefundStatus.Open
   ).length;
@@ -187,6 +205,8 @@ export default function Settings({ loaderData }: Route.ComponentProps) {
           </fetcher.Form>
         </CardContent>
       </Card>
+
+      <NotificationSettings showToasts={showToasts} />
 
       {refundRequests.length > 0 && (
         <Card className="mt-8 max-w-md">

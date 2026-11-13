@@ -42,18 +42,25 @@ export function useBellPopover(): BellPopover {
 
 const REFRESH_BEFORE_EXPIRY_MS = 5 * 60 * 1000;
 
+/** The person's "Show toasts" setting, from the layout loader. */
+const ShowToastsContext = createContext(true);
+
 export function NotificationFeedProvider({
   feed,
+  showToasts,
   children,
 }: {
   feed: FeedIdentity | null;
+  showToasts: boolean;
   children: ReactNode;
 }) {
   const [open, setOpen] = useState(false);
   return (
-    <BellPopoverContext.Provider value={{ open, setOpen }}>
-      <FeedFor feed={feed}>{children}</FeedFor>
-    </BellPopoverContext.Provider>
+    <ShowToastsContext.Provider value={showToasts}>
+      <BellPopoverContext.Provider value={{ open, setOpen }}>
+        <FeedFor feed={feed}>{children}</FeedFor>
+      </BellPopoverContext.Provider>
+    </ShowToastsContext.Provider>
   );
 }
 
@@ -121,11 +128,13 @@ function FeedState({ children }: { children: ReactNode }) {
   const { items, metadata, networkStatus } = useFeedStore();
   const [failed, setFailed] = useState(false);
   const popover = useBellPopover();
-  // Toasts are on for everyone in Phase 1; #29 passes the "Show toasts" setting.
+  // useLiveFeed reads this at arrival time, so flipping the setting on
+  // /settings applies at once (the layout loader revalidates after the save).
+  const showToasts = useContext(ShowToastsContext);
   useLiveFeed({
     popoverOpen: popover.open,
     openPopover: () => popover.setOpen(true),
-    toastsOn: true,
+    toastsOn: showToasts,
   });
 
   useEffect(() => {

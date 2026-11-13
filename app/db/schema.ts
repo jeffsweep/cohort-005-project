@@ -51,6 +51,9 @@ export const users = sqliteTable("users", {
   role: text("role").notNull().$type<UserRole>(),
   avatarUrl: text("avatar_url"),
   bio: text("bio"),
+  // "Show toasts": pop up new Notifications while on Cadence. A Cadence
+  // setting, not a Knock preference.
+  showToasts: integer("show_toasts", { mode: "boolean" }).notNull().default(true),
   createdAt: text("created_at")
     .notNull()
     .$defaultFn(() => new Date().toISOString()),

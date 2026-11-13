@@ -119,6 +119,7 @@ async function seed() {
       email: "alex.rivera@ralph.dev",
       role: UserRole.Admin,
       avatarUrl: "https://api.dicebear.com/9.x/avataaars/svg?seed=alex",
+      showToasts: true,
       createdAt: daysAgo(120),
     })
     .returning()
@@ -131,6 +132,7 @@ async function seed() {
       email: "sarah.chen@ralph.dev",
       role: UserRole.Instructor,
       avatarUrl: "https://api.dicebear.com/9.x/avataaars/svg?seed=sarah",
+      showToasts: true,
       bio: "Senior TypeScript engineer with 10 years of experience building large-scale web applications. Previously at Stripe and Vercel. Passionate about type safety and developer tooling.",
       createdAt: daysAgo(100),
     })
@@ -144,6 +146,7 @@ async function seed() {
       email: "marcus.johnson@ralph.dev",
       role: UserRole.Instructor,
       avatarUrl: "https://api.dicebear.com/9.x/avataaars/svg?seed=marcus",
+      showToasts: true,
       bio: "Full-stack developer and API architect specializing in Node.js and cloud infrastructure. Has built and scaled APIs serving millions of requests daily. Conference speaker and open-source contributor.",
       createdAt: daysAgo(95),
     })
@@ -159,6 +162,7 @@ async function seed() {
       email: "priya.nair@ralph.dev",
       role: UserRole.Instructor,
       avatarUrl: "https://api.dicebear.com/9.x/avataaars/svg?seed=priya",
+      showToasts: true,
       bio: "Accessibility engineer and design-systems consultant. Joined to teach, has not published a course yet.",
       createdAt: daysAgo(210),
     })
@@ -173,6 +177,7 @@ async function seed() {
         email: "emma.wilson@student.dev",
         role: UserRole.Student,
         avatarUrl: "https://api.dicebear.com/9.x/avataaars/svg?seed=emma",
+        showToasts: true,
         createdAt: daysAgo(60),
       },
       {
@@ -180,6 +185,7 @@ async function seed() {
         email: "james.park@student.dev",
         role: UserRole.Student,
         avatarUrl: "https://api.dicebear.com/9.x/avataaars/svg?seed=james",
+        showToasts: true,
         createdAt: daysAgo(55),
       },
       {
@@ -187,6 +193,7 @@ async function seed() {
         email: "olivia.martinez@student.dev",
         role: UserRole.Student,
         avatarUrl: "https://api.dicebear.com/9.x/avataaars/svg?seed=olivia",
+        showToasts: true,
         createdAt: daysAgo(45),
       },
       {
@@ -194,6 +201,7 @@ async function seed() {
         email: "liam@example.com",
         role: UserRole.Student,
         avatarUrl: "https://api.dicebear.com/9.x/avataaars/svg?seed=liam",
+        showToasts: true,
         createdAt: daysAgo(30),
       },
       {
@@ -201,6 +209,7 @@ async function seed() {
         email: "sophia.davis@student.dev",
         role: UserRole.Student,
         avatarUrl: "https://api.dicebear.com/9.x/avataaars/svg?seed=sophia",
+        showToasts: true,
         createdAt: daysAgo(20),
       },
     ])
@@ -214,6 +223,7 @@ async function seed() {
       email: "bossy.mcbossface@student.dev",
       role: UserRole.Student,
       avatarUrl: "https://api.dicebear.com/9.x/avataaars/svg?seed=bossy",
+      showToasts: true,
       createdAt: daysAgo(40),
     })
     .returning()
@@ -243,6 +253,7 @@ async function seed() {
         email: `${slugify(name).replace(/-/g, ".")}@student.dev`,
         role: UserRole.Student,
         avatarUrl: `https://api.dicebear.com/9.x/avataaars/svg?seed=${slugify(name)}`,
+        showToasts: true,
         // Spread across ~12 months, tightening towards today so the recent
         // ranges are populated. The last few sign up inside the last week.
         createdAt: daysAgo(Math.round(355 - i * 10.4)),

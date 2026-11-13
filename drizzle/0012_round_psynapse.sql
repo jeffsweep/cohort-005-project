@@ -1,0 +1,1 @@
+ALTER TABLE `users` ADD `show_toasts` integer DEFAULT true NOT NULL;

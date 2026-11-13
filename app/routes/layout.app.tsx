@@ -216,6 +216,9 @@ export async function loader({ request }: Route.LoaderArgs) {
     countries: COUNTRIES,
     isTeamAdmin: currentUserId ? isTeamAdmin(currentUserId) : false,
     notificationFeed: currentUser ? feedIdentity(currentUser.id) : null,
+    // Read here, not in the browser, so a toast never flashes before the
+    // "Show toasts" setting applies.
+    showToasts: currentUser?.showToasts ?? true,
   };
 }
 
@@ -229,12 +232,13 @@ export default function AppLayout({ loaderData }: Route.ComponentProps) {
     countries,
     isTeamAdmin: userIsTeamAdmin,
     notificationFeed,
+    showToasts,
   } = loaderData;
 
   return (
     <div className="flex h-screen overflow-hidden">
       {/* One feed for the bell and the all-notifications page. */}
-      <NotificationFeedProvider feed={notificationFeed}>
+      <NotificationFeedProvider feed={notificationFeed} showToasts={showToasts}>
         <Sidebar
           currentUser={currentUser}
           recentCourses={recentCourses}
