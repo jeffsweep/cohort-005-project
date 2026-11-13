@@ -89,6 +89,29 @@ export function relativeTime(insertedAt: string, now: Date = new Date()): string
   return `${Math.floor(minutes / (60 * 24))}d`;
 }
 
+export type DayGroup<T> = { label: "Today" | "Earlier"; items: T[] };
+
+/**
+ * The full page's groups: since the reader's local midnight, then the rest.
+ * Keeps the order given (Knock's, newest first) and leaves out empty groups.
+ */
+export function groupByDay<T extends Pick<FeedItemLike, "inserted_at">>(
+  items: T[],
+  now: Date = new Date()
+): DayGroup<T>[] {
+  const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
+  const groups: DayGroup<T>[] = [
+    { label: "Today", items: items.filter((item) => Date.parse(item.inserted_at) >= midnight) },
+    { label: "Earlier", items: items.filter((item) => Date.parse(item.inserted_at) < midnight) },
+  ];
+  return groups.filter((group) => group.items.length > 0);
+}
+
+/** The full page's line under its heading. */
+export function unreadSummary(unreadCount: number): string {
+  return unreadCount === 0 ? "You're all caught up" : `${unreadCount} unread`;
+}
+
 /** The bell's accessible label and tooltip. */
 export function unreadLabel(unreadCount: number): string {
   if (unreadCount === 0) return "Notifications";
