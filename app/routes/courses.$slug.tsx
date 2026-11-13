@@ -52,6 +52,8 @@ import {
 import { parseFormData } from "~/lib/validation";
 import { MAX_RATING, MIN_RATING } from "~/lib/ratings";
 import { StarRating, StarRatingInput } from "~/components/star-rating";
+import { notify } from "~/lib/notifications/notifier.server";
+import { buildCourseRated } from "~/lib/notifications/builders/course-rated.server";
 
 function getCourseBySlug(slug: string) {
   return db.select().from(courses).where(eq(courses.slug, slug)).get();
@@ -475,7 +477,11 @@ export async function action({ params, request }: Route.ActionArgs) {
     return { ok: false as const, error: "Please choose a rating from 1 to 5." };
   }
 
-  rateCourse(currentUserId, course.id, parsed.data.rating);
+  const previousStars = findRating(currentUserId, course.id)?.rating ?? null;
+  const rating = rateCourse(currentUserId, course.id, parsed.data.rating);
+  await notify(() =>
+    buildCourseRated(db, { ratingId: rating.id, previousStars })
+  );
 
   return { ok: true as const, error: null };
 }
@@ -663,12 +669,13 @@ export default function CourseDetail({ loaderData }: Route.ComponentProps) {
             </Link>
           )}
         </div>
-        <StarRating
-          average={ratingSummary.average}
-          count={ratingSummary.count}
-          size="md"
-          className="mb-3"
-        />
+        <div id="ratings" className="mb-3">
+          <StarRating
+            average={ratingSummary.average}
+            count={ratingSummary.count}
+            size="md"
+          />
+        </div>
         <p className="mb-4 text-lg text-muted-foreground">
           {course.description}
         </p>

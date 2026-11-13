@@ -11,6 +11,8 @@ import type { Route } from "./+types/instructor.$courseId";
 import { getCurrentUserId } from "~/lib/session";
 import { CourseStatus, UserRole } from "~/db/schema";
 import { db } from "~/db";
+import { notify } from "~/lib/notifications/notifier.server";
+import { buildCourseStatus } from "~/lib/notifications/builders/course-status.server";
 import {
   courses,
   categories,
@@ -694,6 +696,11 @@ export async function action({ params, request }: Route.ActionArgs) {
 
   if (intent === "update-status") {
     updateCourseStatus(courseId, parsed.data.status);
+    if (course.status !== parsed.data.status) {
+      await notify(() =>
+        buildCourseStatus(db, { courseId, actorId: currentUserId })
+      );
+    }
     return { success: true, field: "status" };
   }
 

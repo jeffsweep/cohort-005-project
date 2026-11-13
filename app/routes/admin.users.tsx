@@ -7,6 +7,8 @@ import { getCurrentUserId } from "~/lib/session";
 import { parseFormData } from "~/lib/validation";
 import { UserRole, users } from "~/db/schema";
 import { db } from "~/db";
+import { notify } from "~/lib/notifications/notifier.server";
+import { buildRoleChanged } from "~/lib/notifications/builders/role-changed.server";
 import { eq } from "drizzle-orm";
 import { Card, CardContent, CardHeader } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
@@ -125,7 +127,13 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (intent === "update-role") {
     const { userId, role } = parsed.data;
+    const previousRole = getUserById(userId)?.role;
     updateUserRole(userId, role);
+    if (previousRole !== undefined && previousRole !== role) {
+      await notify(() =>
+        buildRoleChanged(db, { userId, actorId: currentUserId })
+      );
+    }
     return { success: true };
   }
 

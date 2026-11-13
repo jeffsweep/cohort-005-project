@@ -36,6 +36,30 @@ export const NOTIFICATION_KINDS = [
     alwaysOn: false,
     batched: false,
   },
+  {
+    key: "course-rated",
+    name: "Course rated",
+    label: "someone rates my course",
+    group: "My courses",
+    alwaysOn: false,
+    batched: false,
+  },
+  {
+    key: "course-status",
+    name: "Course status changed",
+    label: "Cadence changes my course's status",
+    group: "My courses",
+    alwaysOn: false,
+    batched: false,
+  },
+  {
+    key: "role-changed",
+    name: "Role changed",
+    label: "my role changes",
+    group: "Platform",
+    alwaysOn: true,
+    batched: false,
+  },
 ] as const satisfies readonly NotificationKind[];
 
 export type NotificationKey = (typeof NOTIFICATION_KINDS)[number]["key"];

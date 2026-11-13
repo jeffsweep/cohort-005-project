@@ -15,6 +15,8 @@ import {
   users,
 } from "~/db/schema";
 import { db } from "~/db";
+import { notify } from "~/lib/notifications/notifier.server";
+import { buildCourseStatus } from "~/lib/notifications/builders/course-status.server";
 import { eq, or, sql } from "drizzle-orm";
 import { Card, CardContent } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
@@ -139,7 +141,18 @@ export async function action({ request }: Route.ActionArgs) {
   const { intent } = parsed.data;
 
   if (intent === "update-status") {
-    updateCourseStatus(parsed.data.courseId, parsed.data.status);
+    const { courseId, status } = parsed.data;
+    const previous = db
+      .select({ status: courses.status })
+      .from(courses)
+      .where(eq(courses.id, courseId))
+      .get();
+    updateCourseStatus(courseId, status);
+    if (previous && previous.status !== status) {
+      await notify(() =>
+        buildCourseStatus(db, { courseId, actorId: currentUserId })
+      );
+    }
     return { success: true };
   }
 
