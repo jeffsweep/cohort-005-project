@@ -1,0 +1,32 @@
+{
+  "$schema": "https://schemas.knock.app/cli/workflow.json",
+  "name": "Lesson added",
+  "steps": [
+    {
+      "ref": "batch_1",
+      "name": "Batch per course",
+      "type": "batch",
+      "settings": {
+        "batch_key": "data.courseId",
+        "batch_window_type": "fixed",
+        "batch_window": {
+          "unit": "days",
+          "value": 1
+        },
+        "batch_order": "asc",
+        "batch_execution_mode": "accumulate",
+        "workflow_version_mode": "latest"
+      }
+    },
+    {
+      "ref": "in_app_feed_1",
+      "name": "In-app feed",
+      "type": "channel",
+      "channel_key": "in-app",
+      "template": {
+        "markdown_body": "{{ total_activities }} new {% if total_activities == 1 %}lesson{% else %}lessons{% endif %} on {{ data.courseTitle }}",
+        "action_url": "{{ data.url }}"
+      }
+    }
+  ]
+}
