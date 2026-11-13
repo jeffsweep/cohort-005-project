@@ -7,9 +7,11 @@ import {
   declineRefundRequest,
   raiseRefundRequest,
 } from "~/lib/refunds.server";
-import { buildRefundApproved } from "./refund-approved.server";
 import { buildRefundApprovedInstructor } from "./refund-approved-instructor.server";
-import { buildRefundDeclined } from "./refund-declined.server";
+import {
+  buildRefundApproved,
+  buildRefundDeclined,
+} from "./refund-request.server";
 import {
   buildRefundRequested,
   refundRequestedWithdrawal,

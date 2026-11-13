@@ -82,11 +82,27 @@ export function isTeamLicence(seats: readonly unknown[]): boolean {
   return seats.length > 0;
 }
 
+/** A Refund Request approved: tell the buyer. Always on. */
+export function buildRefundApproved(
+  db: Db,
+  event: { refundRequestId: number }
+): Send[] {
+  return buildBuyerDecision(db, event.refundRequestId, RefundStatus.Approved);
+}
+
+/** A Refund Request declined: tell the buyer. Always on. */
+export function buildRefundDeclined(
+  db: Db,
+  event: { refundRequestId: number }
+): Send[] {
+  return buildBuyerDecision(db, event.refundRequestId, RefundStatus.Declined);
+}
+
 /**
  * A decided Refund Request: tell the buyer, linking to where they raised it.
  * Sends nothing unless the request was decided this way.
  */
-export function buildBuyerDecision(
+function buildBuyerDecision(
   db: Db,
   refundRequestId: number,
   decision: RefundStatus.Approved | RefundStatus.Declined

@@ -25,9 +25,11 @@ import { RULE_BREAK_LABELS } from "~/lib/refund-rules";
 import { sendEmail } from "~/lib/mailer.server";
 import { notify, withdraw } from "~/lib/notifications/notifier.server";
 import { refundRequestedWithdrawal } from "~/lib/notifications/builders/refund-requested.server";
-import { buildRefundApproved } from "~/lib/notifications/builders/refund-approved.server";
 import { buildRefundApprovedInstructor } from "~/lib/notifications/builders/refund-approved-instructor.server";
-import { buildRefundDeclined } from "~/lib/notifications/builders/refund-declined.server";
+import {
+  buildRefundApproved,
+  buildRefundDeclined,
+} from "~/lib/notifications/builders/refund-request.server";
 
 const refundFilterSchema = z
   .nativeEnum(RefundStatus)
