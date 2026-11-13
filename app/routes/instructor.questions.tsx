@@ -14,6 +14,8 @@ import { AlertTriangle, CheckCircle2, ExternalLink } from "lucide-react";
 import { cn, daysSince, formatRelativeTime } from "~/lib/utils";
 import { MIN_COMMENT_LENGTH, MAX_COMMENT_LENGTH } from "~/lib/comments";
 import { parseFormData } from "~/lib/validation";
+import { notify } from "~/lib/notifications/notifier.server";
+import { buildCommentPosted } from "~/lib/notifications/builders/discussion.server";
 import { db } from "~/db";
 import {
   comments,
@@ -207,8 +209,9 @@ export async function action({ request }: Route.ActionArgs) {
   // instructor, or an admin.
   const access = await requireStaff(request, course.courseId);
 
+  let reply;
   try {
-    createComment(
+    reply = createComment(
       access.userId!,
       question.lessonId,
       question.id,
@@ -221,6 +224,7 @@ export async function action({ request }: Route.ActionArgs) {
     throw error;
   }
 
+  await notify(() => buildCommentPosted(db, { commentId: reply.id }));
   return { ok: true };
 }
 

@@ -25,6 +25,11 @@ export type NotificationKind = {
   alwaysOn: boolean;
   /** Batched per course for a day before delivery. */
   batched: boolean;
+  /**
+   * The in-app template's Markdown, when the kind writes its own sentence.
+   * Without it the template shows the send's `data.message`.
+   */
+  markdownBody?: string;
 };
 
 export const NOTIFICATION_KINDS = [
@@ -35,6 +40,82 @@ export const NOTIFICATION_KINDS = [
     group: "My courses",
     alwaysOn: false,
     batched: false,
+  },
+  {
+    key: "team-licence-bought",
+    name: "Team Licence bought",
+    label: "someone buys a Team Licence for my course",
+    group: "My courses",
+    alwaysOn: false,
+    batched: false,
+  },
+  {
+    key: "seat-claimed",
+    name: "Seat claimed",
+    label: "someone claims a Seat on my team",
+    group: "My teams",
+    alwaysOn: false,
+    batched: false,
+  },
+  {
+    key: "question-asked",
+    name: "Question asked",
+    label: "a Student posts in my course's discussion",
+    group: "My courses",
+    alwaysOn: false,
+    batched: false,
+  },
+  {
+    key: "question-answered",
+    name: "Question answered",
+    label: "someone replies to my post or comment",
+    group: "Discussion & courses",
+    alwaysOn: false,
+    batched: false,
+  },
+  {
+    key: "comment-replied",
+    name: "Comment replied",
+    label: "someone replies to my post or comment",
+    group: "Discussion & courses",
+    alwaysOn: false,
+    batched: false,
+  },
+  {
+    key: "course-rated",
+    name: "Course rated",
+    label: "someone rates my course",
+    group: "My courses",
+    alwaysOn: false,
+    batched: false,
+  },
+  {
+    key: "course-status",
+    name: "Course status changed",
+    label: "Cadence changes my course's status",
+    group: "My courses",
+    alwaysOn: false,
+    batched: false,
+  },
+  {
+    key: "role-changed",
+    name: "Role changed",
+    label: "my role changes",
+    group: "Platform",
+    alwaysOn: true,
+    batched: false,
+  },
+  {
+    key: "lesson-added",
+    name: "Lesson added",
+    label: "new lessons are added to a course I'm enrolled on",
+    group: "Discussion & courses",
+    alwaysOn: false,
+    batched: true,
+    // Knock renders only the first 10 batched activities, so the sentence is
+    // written from the batch's count, not from each send's message.
+    markdownBody:
+      "{{ total_activities }} new {% if total_activities == 1 %}lesson{% else %}lessons{% endif %} on {{ data.courseTitle }}",
   },
 ] as const satisfies readonly NotificationKind[];
 
