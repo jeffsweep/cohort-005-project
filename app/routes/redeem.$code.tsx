@@ -7,6 +7,8 @@ import { getCurrentUserId } from "~/lib/session";
 import { resolveCountry } from "~/lib/country.server";
 import { parseParams, parseFormData } from "~/lib/validation";
 import { getSeatAvailability } from "~/lib/refunds.server";
+import { notify } from "~/lib/notifications/notifier.server";
+import { buildEnrolled } from "~/lib/notifications/builders/enrolled.server";
 import { Card, CardContent } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Ticket, AlertCircle, CheckCircle2, Globe } from "lucide-react";
@@ -204,6 +206,8 @@ export async function action({ params, request }: Route.ActionArgs) {
     return data({ error: result.error }, { status: 400 });
   }
 
+  await notify(() => buildEnrolled(db, { enrollmentId: result.enrollment.id }));
+
   const course = getCourseById(result.enrollment.courseId);
   if (!course) {
     throw redirect("/courses");
@@ -237,7 +241,10 @@ export default function Redeem({
 
   // Determine which state to show
   const canRedeem =
-    !alreadyRedeemed && !alreadyEnrolled && !countryMismatch && !unavailableReason;
+    !alreadyRedeemed &&
+    !alreadyEnrolled &&
+    !countryMismatch &&
+    !unavailableReason;
 
   return (
     <div className="mx-auto max-w-2xl p-6 lg:p-8">
