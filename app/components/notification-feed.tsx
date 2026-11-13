@@ -1,4 +1,12 @@
-import { createContext, useContext, useEffect, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
 import {
   KnockFeedProvider,
   KnockProvider,
@@ -103,14 +111,23 @@ function KnockFeed({ feed, children }: { feed: FeedIdentity; children: ReactNode
   // one: handing Knock a new token reconnects the feed. Knock asks for a
   // fresh one before it expires.
   const [initialToken] = useState(feed.userToken);
+  // Knock builds a new client, refetching the feed and reopening its live
+  // connection, whenever the user or the expiry callback is a new value. The
+  // bell's open state lives above this, so without these every open of the
+  // bell would rebuild the feed.
+  const user = useMemo(() => ({ id: feed.userId }), [feed.userId]);
+  const onUserTokenExpiring = useCallback(
+    () => refreshToken(feed.userId),
+    [feed.userId]
+  );
 
   return (
     <KnockProvider
       apiKey={feed.publicKey}
-      user={{ id: feed.userId }}
+      user={user}
       identificationStrategy="skip"
       userToken={initialToken}
-      onUserTokenExpiring={() => refreshToken(feed.userId)}
+      onUserTokenExpiring={onUserTokenExpiring}
       timeBeforeExpirationInMs={REFRESH_BEFORE_EXPIRY_MS}
     >
       <KnockFeedProvider feedId={feed.feedChannelId} defaultFeedOptions={FEED_OPTIONS}>
