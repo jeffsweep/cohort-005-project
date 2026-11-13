@@ -10,6 +10,7 @@ import { cn } from "~/lib/utils";
 import { Popover, PopoverContent, PopoverTrigger } from "~/components/ui/popover";
 import { feedRow, unreadLabel, type FeedRow } from "~/lib/notifications/feed-row";
 import type { FeedIdentity } from "~/lib/notifications/feed-identity.server";
+import { FEED_OPTIONS, useLiveFeed } from "~/components/notification-live";
 
 // ─── The bell ───
 // Sits in the sidebar's logo row for a signed-in person. Reads their feed
@@ -46,7 +47,7 @@ function KnockBell({ feed }: { feed: FeedIdentity }) {
       onUserTokenExpiring={() => refreshToken(feed.userId)}
       timeBeforeExpirationInMs={REFRESH_BEFORE_EXPIRY_MS}
     >
-      <KnockFeedProvider feedId={feed.feedChannelId}>
+      <KnockFeedProvider feedId={feed.feedChannelId} defaultFeedOptions={FEED_OPTIONS}>
         <KnockFeedBell />
       </KnockFeedProvider>
     </KnockProvider>
@@ -78,6 +79,8 @@ function KnockFeedBell() {
   const [failed, setFailed] = useState(false);
   const navigate = useNavigate();
   const [open, setOpen] = useState(false);
+  // Toasts are on for everyone in Phase 1; #29 passes the "Show toasts" setting.
+  useLiveFeed({ popoverOpen: open, openPopover: () => setOpen(true), toastsOn: true });
 
   useEffect(() => {
     let cancelled = false;
