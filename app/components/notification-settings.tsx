@@ -125,7 +125,7 @@ function LoadedKnockToggles({ audience }: { audience: Audience }) {
     setFailed((current) => without(current, toggle.label));
 
     knock.user
-      .setPreferences(next as SetPreferencesProperties)
+      .setPreferences(next)
       .catch(() => {
         // Flip back only this toggle; later flips stay as they are.
         const reverted = preferencesWithToggle(shown.current, toggle.keys, !on);
@@ -160,10 +160,6 @@ function LoadedKnockToggles({ audience }: { audience: Audience }) {
     </>
   );
 }
-
-type SetPreferencesProperties = Parameters<
-  ReturnType<typeof useKnockClient>["user"]["setPreferences"]
->[0];
 
 function without(set: ReadonlySet<string>, value: string): ReadonlySet<string> {
   if (!set.has(value)) return set;

@@ -143,6 +143,36 @@ describe("preferencesFromResponse", () => {
     ).toEqual({ ok: true, preferences: null });
   });
 
+  it("keeps per-channel and conditional settings it doesn't change", () => {
+    const body = {
+      id: "default",
+      workflows: {
+        enrolled: { channel_types: { email: false } },
+        "lesson-added": {
+          conditions: [
+            { variable: "recipient.x", operator: "equal_to", argument: "y" },
+          ],
+        },
+      },
+      categories: null,
+      channel_types: { in_app_feed: true },
+      channels: null,
+    };
+    expect(
+      preferencesFromResponse({ statusCode: "ok", status: 200, body })
+    ).toEqual({ ok: true, preferences: body });
+  });
+
+  it("fails on a body that isn't a preference set", () => {
+    expect(
+      preferencesFromResponse({
+        statusCode: "ok",
+        status: 200,
+        body: { workflows: { enrolled: "off" } },
+      })
+    ).toEqual({ ok: false });
+  });
+
   it("fails on any other error", () => {
     expect(
       preferencesFromResponse({ statusCode: "error", status: 401, body: {} })

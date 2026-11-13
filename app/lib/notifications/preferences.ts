@@ -1,3 +1,4 @@
+import { z } from "zod";
 import type { UserRole } from "~/db/schema";
 import {
   NOTIFICATION_KINDS,
@@ -58,20 +59,39 @@ export function visibleToggleGroups(audience: Audience): ToggleGroup[] {
     .filter(({ toggles }) => toggles.length > 0);
 }
 
-// The parts of Knock's PreferenceSet this screen reads and writes. Values
-// other than `false` (e.g. per-channel settings) count as on.
-type PreferenceMap = Partial<Record<string, unknown>>;
-export type LoadedPreferences = {
-  workflows?: PreferenceMap | null;
-  categories?: PreferenceMap | null;
-  channel_types?: PreferenceMap | null;
-  channels?: PreferenceMap | null;
-};
+// Knock's PreferenceSet, as its client types it. A setting other than `false`
+// (e.g. per-channel or conditional) counts as on, and is saved back as it was.
+const conditionalSettings = z.object({
+  conditions: z.array(
+    z.object({ argument: z.string(), variable: z.string(), operator: z.string() })
+  ),
+});
+const channelSetting = z.union([z.boolean(), conditionalSettings]);
+const channelPreferences = z.record(z.string(), channelSetting);
+const workflowSetting = z.union([
+  z.boolean(),
+  z.object({ channel_types: channelPreferences }),
+  z.object({ channels: channelPreferences }),
+  conditionalSettings,
+]);
+const workflowPreferences = z.record(z.string(), workflowSetting);
+
+const loadedPreferencesSchema = z.object({
+  id: z.string().optional(),
+  workflows: workflowPreferences.nullish(),
+  categories: workflowPreferences.nullish(),
+  channel_types: channelPreferences.nullish(),
+  channels: channelPreferences.nullish(),
+});
+
+export type LoadedPreferences = z.infer<typeof loadedPreferencesSchema>;
+type WorkflowPreferences = z.infer<typeof workflowPreferences>;
+type ChannelPreferences = z.infer<typeof channelPreferences>;
 export type PreferencesToSave = {
-  workflows: PreferenceMap;
-  categories?: PreferenceMap;
-  channel_types?: PreferenceMap;
-  channels?: PreferenceMap;
+  workflows: WorkflowPreferences;
+  categories?: WorkflowPreferences;
+  channel_types?: ChannelPreferences;
+  channels?: ChannelPreferences;
 };
 
 /** The shape of a response from the Knock client's `makeRequest`. */
@@ -91,7 +111,10 @@ export function preferencesFromResponse(
   | { ok: true; preferences: LoadedPreferences | null }
   | { ok: false } {
   if (response.statusCode === "ok") {
-    return { ok: true, preferences: response.body as LoadedPreferences };
+    const parsed = loadedPreferencesSchema.safeParse(response.body);
+    return parsed.success
+      ? { ok: true, preferences: parsed.data }
+      : { ok: false };
   }
   if (response.status === 404) return { ok: true, preferences: null };
   return { ok: false };
@@ -112,7 +135,7 @@ export function preferencesWithToggle(
   keys: readonly NotificationKey[],
   on: boolean
 ): PreferencesToSave {
-  const workflows: PreferenceMap = { ...loaded?.workflows };
+  const workflows: WorkflowPreferences = { ...loaded?.workflows };
   for (const key of keys) workflows[key] = on;
   return {
     workflows,
