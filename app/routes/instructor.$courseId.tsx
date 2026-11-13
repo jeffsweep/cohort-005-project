@@ -697,11 +697,13 @@ export async function action({ params, request }: Route.ActionArgs) {
 
   if (intent === "update-status") {
     updateCourseStatus(courseId, parsed.data.status);
-    if (course.status !== parsed.data.status) {
-      await notify(() =>
-        buildCourseStatus(db, { courseId, actorId: currentUserId })
-      );
-    }
+    await notify(() =>
+      buildCourseStatus(db, {
+        courseId,
+        actorId: currentUserId,
+        previousStatus: course.status,
+      })
+    );
     return { success: true, field: "status" };
   }
 

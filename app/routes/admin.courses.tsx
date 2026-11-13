@@ -147,12 +147,15 @@ export async function action({ request }: Route.ActionArgs) {
       .from(courses)
       .where(eq(courses.id, courseId))
       .get();
+    if (!previous) throw data("Course not found.", { status: 404 });
     updateCourseStatus(courseId, status);
-    if (previous && previous.status !== status) {
-      await notify(() =>
-        buildCourseStatus(db, { courseId, actorId: currentUserId })
-      );
-    }
+    await notify(() =>
+      buildCourseStatus(db, {
+        courseId,
+        actorId: currentUserId,
+        previousStatus: previous.status,
+      })
+    );
     return { success: true };
   }
 

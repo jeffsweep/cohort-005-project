@@ -36,7 +36,11 @@ describe("course-status", () => {
     setStatus(CourseStatus.Archived, "2026-11-13T09:00:00.000Z");
 
     expect(
-      buildCourseStatus(db, { courseId: base.course.id, actorId: pat.id })
+      buildCourseStatus(db, {
+        courseId: base.course.id,
+        actorId: pat.id,
+        previousStatus: CourseStatus.Published,
+      })
     ).toEqual([
       {
         workflow: "course-status",
@@ -56,12 +60,18 @@ describe("course-status", () => {
     const event = { courseId: base.course.id, actorId: pat.id };
 
     setStatus(CourseStatus.Published, "2026-11-13T09:00:00.000Z");
-    expect(buildCourseStatus(db, event)[0].data.message).toBe(
-      "*Test Course* was published by Cadence"
-    );
+    expect(
+      buildCourseStatus(db, { ...event, previousStatus: CourseStatus.Draft })[0]
+        .data.message
+    ).toBe("*Test Course* was published by Cadence");
 
     setStatus(CourseStatus.Draft, "2026-11-13T10:00:00.000Z");
-    expect(buildCourseStatus(db, event)[0].data.message).toBe(
+    expect(
+      buildCourseStatus(db, {
+        ...event,
+        previousStatus: CourseStatus.Published,
+      })[0].data.message
+    ).toBe(
       "*Test Course* was moved back to draft by Cadence"
     );
   });
@@ -73,6 +83,20 @@ describe("course-status", () => {
       buildCourseStatus(db, {
         courseId: base.course.id,
         actorId: base.instructor.id,
+        previousStatus: CourseStatus.Published,
+      })
+    ).toEqual([]);
+  });
+
+  it("sends nothing when the status was saved unchanged", () => {
+    const pat = addAdmin();
+    setStatus(CourseStatus.Archived, "2026-11-13T09:00:00.000Z");
+
+    expect(
+      buildCourseStatus(db, {
+        courseId: base.course.id,
+        actorId: pat.id,
+        previousStatus: CourseStatus.Archived,
       })
     ).toEqual([]);
   });
@@ -80,7 +104,11 @@ describe("course-status", () => {
   it("builds an identical payload when built twice", () => {
     const pat = addAdmin();
     setStatus(CourseStatus.Archived, "2026-11-13T09:00:00.000Z");
-    const event = { courseId: base.course.id, actorId: pat.id };
+    const event = {
+      courseId: base.course.id,
+      actorId: pat.id,
+      previousStatus: CourseStatus.Published,
+    };
 
     expect(buildCourseStatus(db, event)).toEqual(buildCourseStatus(db, event));
   });
@@ -88,8 +116,12 @@ describe("course-status", () => {
   it("sends nothing for a course that no longer exists", () => {
     const pat = addAdmin();
 
-    expect(buildCourseStatus(db, { courseId: 999, actorId: pat.id })).toEqual(
-      []
-    );
+    expect(
+      buildCourseStatus(db, {
+        courseId: 999,
+        actorId: pat.id,
+        previousStatus: CourseStatus.Published,
+      })
+    ).toEqual([]);
   });
 });

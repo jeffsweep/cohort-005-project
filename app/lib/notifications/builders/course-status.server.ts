@@ -17,12 +17,13 @@ const STATUS_WORDING: Record<CourseStatus, string> = {
 };
 
 /**
- * A course's status changed (read after the write commits): tell its
- * Instructor, unless they made the change themselves.
+ * A course's status was saved (read after the write commits): tell its
+ * Instructor, unless they made the change themselves or the status is the
+ * one it had before.
  */
 export function buildCourseStatus(
   db: Db,
-  event: { courseId: number; actorId: number }
+  event: { courseId: number; actorId: number; previousStatus: CourseStatus }
 ): Send[] {
   const course = db
     .select()
@@ -31,6 +32,7 @@ export function buildCourseStatus(
     .get();
   const actor = db.select().from(users).where(eq(users.id, event.actorId)).get();
   if (!course || !actor) return [];
+  if (course.status === event.previousStatus) return [];
 
   const instructor = db
     .select()
