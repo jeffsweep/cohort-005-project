@@ -13,6 +13,7 @@ import { notify } from "~/lib/notifications/notifier.server";
 import { buildLessonAdded } from "~/lib/notifications/builders/lesson-added.server";
 import { CourseStatus, UserRole } from "~/db/schema";
 import { db } from "~/db";
+import { buildCourseStatus } from "~/lib/notifications/builders/course-status.server";
 import {
   courses,
   categories,
@@ -696,6 +697,11 @@ export async function action({ params, request }: Route.ActionArgs) {
 
   if (intent === "update-status") {
     updateCourseStatus(courseId, parsed.data.status);
+    if (course.status !== parsed.data.status) {
+      await notify(() =>
+        buildCourseStatus(db, { courseId, actorId: currentUserId })
+      );
+    }
     return { success: true, field: "status" };
   }
 
