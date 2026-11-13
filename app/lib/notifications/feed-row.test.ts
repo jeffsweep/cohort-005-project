@@ -80,6 +80,52 @@ describe("feedRow", () => {
     ]);
   });
 
+  it("writes a batch of added lessons from its count and course, not its message", () => {
+    const row = feedRow(
+      item({
+        source: { key: "lesson-added" },
+        total_activities: 3,
+        data: {
+          actorName: "Alex",
+          message: "Alex added a lesson to *Test Course*",
+          url: "/courses/test-course",
+          courseId: 1,
+          courseTitle: "*Test Course*",
+        },
+      }),
+      now
+    );
+
+    expect(row.actor).toBeNull();
+    expect(row.wording).toEqual([
+      { text: "3 new lessons on ", italic: false },
+      { text: "Test Course", italic: true },
+    ]);
+    expect(row.url).toBe("/courses/test-course");
+  });
+
+  it("says lesson, not lessons, for a batch of one", () => {
+    const row = feedRow(
+      item({
+        source: { key: "lesson-added" },
+        total_activities: 1,
+        data: {
+          actorName: "Alex",
+          message: "Alex added a module to *Test Course*",
+          url: "/courses/test-course",
+          courseId: 1,
+          courseTitle: "*Test Course*",
+        },
+      }),
+      now
+    );
+
+    expect(row.wording).toEqual([
+      { text: "1 new lesson on ", italic: false },
+      { text: "Test Course", italic: true },
+    ]);
+  });
+
   it("is read once Knock has a read time", () => {
     expect(feedRow(item({ read_at: "2026-11-13T11:58:00Z" }), now).read).toBe(true);
   });
