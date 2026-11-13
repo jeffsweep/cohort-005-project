@@ -36,6 +36,30 @@ export const NOTIFICATION_KINDS = [
     alwaysOn: false,
     batched: false,
   },
+  {
+    key: "question-asked",
+    name: "Question asked",
+    label: "a Student posts in my course's discussion",
+    group: "My courses",
+    alwaysOn: false,
+    batched: false,
+  },
+  {
+    key: "question-answered",
+    name: "Question answered",
+    label: "someone replies to my post or comment",
+    group: "Discussion & courses",
+    alwaysOn: false,
+    batched: false,
+  },
+  {
+    key: "comment-replied",
+    name: "Comment replied",
+    label: "someone replies to my post or comment",
+    group: "Discussion & courses",
+    alwaysOn: false,
+    batched: false,
+  },
 ] as const satisfies readonly NotificationKind[];
 
 export type NotificationKey = (typeof NOTIFICATION_KINDS)[number]["key"];

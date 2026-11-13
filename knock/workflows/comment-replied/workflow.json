@@ -1,0 +1,16 @@
+{
+  "$schema": "https://schemas.knock.app/cli/workflow.json",
+  "name": "Comment replied",
+  "steps": [
+    {
+      "ref": "in_app_feed_1",
+      "name": "In-app feed",
+      "type": "channel",
+      "channel_key": "in-app",
+      "template": {
+        "markdown_body": "{{ data.message }}",
+        "action_url": "{{ data.url }}"
+      }
+    }
+  ]
+}
