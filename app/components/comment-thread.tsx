@@ -208,9 +208,13 @@ function CommentItem({
 
   const isAuthor = currentUserId !== null && comment.author.id === currentUserId;
 
+  // Notifications link to #comment-<id> (see the discussion builder), so each
+  // post and reply is an anchor.
+  const anchorId = `comment-${comment.id}`;
+
   if (comment.deleted) {
     return (
-      <div className="py-3">
+      <div id={anchorId} className="scroll-mt-6 py-3">
         <p className="text-sm italic text-muted-foreground">
           This comment was deleted.
         </p>
@@ -225,7 +229,13 @@ function CommentItem({
   }
 
   return (
-    <div className={cn("py-3", isReply && "border-l pl-4")}>
+    <div
+      id={anchorId}
+      className={cn(
+        "scroll-mt-6 rounded-md py-3 target:bg-primary/5",
+        isReply && "border-l pl-4"
+      )}
+    >
       <div className="flex items-start gap-3">
         <UserAvatar
           name={comment.author.name}

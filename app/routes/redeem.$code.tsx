@@ -9,6 +9,7 @@ import { parseParams, parseFormData } from "~/lib/validation";
 import { getSeatAvailability } from "~/lib/refunds.server";
 import { notify } from "~/lib/notifications/notifier.server";
 import { buildEnrolled } from "~/lib/notifications/builders/enrolled.server";
+import { buildSeatClaimed } from "~/lib/notifications/builders/seat-claimed.server";
 import { Card, CardContent } from "~/components/ui/card";
 import { Button } from "~/components/ui/button";
 import { Ticket, AlertCircle, CheckCircle2, Globe } from "lucide-react";
@@ -43,7 +44,7 @@ const SEAT_REFUNDED =
   "This seat is no longer available. Ask the person who shared it with you.";
 
 type RedeemResult =
-  | { ok: true; enrollment: typeof enrollments.$inferSelect }
+  | { ok: true; enrollment: typeof enrollments.$inferSelect; seatId: number }
   | { ok: false; error: string };
 
 function redeemCoupon(
@@ -111,7 +112,7 @@ function redeemCoupon(
     .returning()
     .get();
 
-  return { ok: true, enrollment };
+  return { ok: true, enrollment, seatId: coupon.id };
 }
 
 const redeemParamsSchema = z.object({
@@ -207,6 +208,7 @@ export async function action({ params, request }: Route.ActionArgs) {
   }
 
   await notify(() => buildEnrolled(db, { enrollmentId: result.enrollment.id }));
+  await notify(() => buildSeatClaimed(db, { seatId: result.seatId }));
 
   const course = getCourseById(result.enrollment.courseId);
   if (!course) {

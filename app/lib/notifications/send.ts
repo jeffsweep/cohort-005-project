@@ -24,6 +24,8 @@ export type SendData = {
   url: string;
   /** Only for `lesson-added`, which Knock batches per course. */
   courseId?: number;
+  /** Only for `lesson-added`: the course title as italic Markdown, for its batched sentence. */
+  courseTitle?: string;
   /** Only for `refund-requested`, so its copies can be withdrawn once decided. */
   refundRequestId?: number;
 };
