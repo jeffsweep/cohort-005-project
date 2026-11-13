@@ -124,4 +124,16 @@ describe("generateWorkflows", () => {
     expect(alwaysOn.workflow.settings).toEqual({ override_preferences: true });
     expect(mutable.workflow).not.toHaveProperty("settings");
   });
+
+  it("makes Knock ignore mutes only for refund outcomes and role changes", () => {
+    const ignoringMutes = generateWorkflows(NOTIFICATION_KINDS)
+      .filter(({ workflow }) => workflow.settings?.override_preferences)
+      .map(({ key }) => key);
+
+    expect(ignoringMutes).toEqual([
+      "refund-approved",
+      "refund-declined",
+      "role-changed",
+    ]);
+  });
 });
