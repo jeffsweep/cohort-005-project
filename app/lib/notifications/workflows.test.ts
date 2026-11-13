@@ -84,9 +84,9 @@ describe("generateWorkflows", () => {
   it("writes the lesson-added sentence from the batch's total count", () => {
     const lessonAdded = generateWorkflows(NOTIFICATION_KINDS).find(
       (w) => w.key === "lesson-added"
-    )!;
+    );
 
-    expect(lessonAdded.workflow).toEqual({
+    expect(lessonAdded?.workflow).toEqual({
       $schema: "https://schemas.knock.app/cli/workflow.json",
       name: "Lesson added",
       steps: [

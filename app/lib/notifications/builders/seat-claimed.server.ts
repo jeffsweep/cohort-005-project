@@ -29,6 +29,7 @@ export function buildSeatClaimed(db: Db, event: { seatId: number }): Send[] {
   if (!seat || seat.redeemedByUserId === null || seat.redeemedAt === null) {
     return [];
   }
+  const claimedAt = seat.redeemedAt;
 
   const claimer = db
     .select()
@@ -52,8 +53,8 @@ export function buildSeatClaimed(db: Db, event: { seatId: number }): Send[] {
   const claimedSoFar = licenceSeats.filter(
     (other) =>
       other.redeemedAt !== null &&
-      (other.redeemedAt < seat.redeemedAt! ||
-        (other.redeemedAt === seat.redeemedAt && other.id <= seat.id))
+      (other.redeemedAt < claimedAt ||
+        (other.redeemedAt === claimedAt && other.id <= seat.id))
   ).length;
   const left = licenceSeats.length - claimedSoFar;
 
