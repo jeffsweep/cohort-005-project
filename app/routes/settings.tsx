@@ -31,7 +31,9 @@ import {
 } from "~/components/notification-settings";
 
 const showToastsSchema = z.object({
-  on: z.enum(["true", "false"]),
+  // A form posts the strings "true" / "false"; z.coerce.boolean() would read
+  // "false" as true.
+  on: z.enum(["true", "false"]).transform((on) => on === "true"),
 });
 
 const settingsSchema = z.object({
@@ -111,8 +113,10 @@ export async function action({ request }: Route.ActionArgs) {
 
   if (formData.get("intent") === SHOW_TOASTS_INTENT) {
     const toggle = parseFormData(formData, showToastsSchema);
-    if (!toggle.success) return data({ ok: false }, { status: 400 });
-    setShowToasts(db, currentUser.id, toggle.data.on === "true");
+    if (!toggle.success) {
+      throw data("Show toasts must be on or off.", { status: 400 });
+    }
+    setShowToasts(db, currentUser.id, toggle.data.on);
     return { ok: true };
   }
 
