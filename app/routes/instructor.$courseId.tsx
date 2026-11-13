@@ -9,6 +9,8 @@ import {
 } from "@hello-pangea/dnd";
 import type { Route } from "./+types/instructor.$courseId";
 import { getCurrentUserId } from "~/lib/session";
+import { notify } from "~/lib/notifications/notifier.server";
+import { buildLessonAdded } from "~/lib/notifications/builders/lesson-added.server";
 import { CourseStatus, UserRole } from "~/db/schema";
 import { db } from "~/db";
 import {
@@ -720,7 +722,10 @@ export async function action({ params, request }: Route.ActionArgs) {
   }
 
   if (intent === "add-module") {
-    createModule(courseId, parsed.data.title, null);
+    const mod = createModule(courseId, parsed.data.title, null);
+    await notify(() =>
+      buildLessonAdded(db, { moduleId: mod.id, actorId: currentUserId })
+    );
     return { success: true, field: "module" };
   }
 
@@ -759,7 +764,10 @@ export async function action({ params, request }: Route.ActionArgs) {
         { status: 404 }
       );
     }
-    createLesson(moduleId, title, null, null, null, null);
+    const lesson = createLesson(moduleId, title, null, null, null, null);
+    await notify(() =>
+      buildLessonAdded(db, { lessonId: lesson.id, actorId: currentUserId })
+    );
     return { success: true, field: "lesson" };
   }
 
