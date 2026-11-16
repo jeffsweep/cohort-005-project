@@ -61,27 +61,41 @@ describe("toggling a Bookmark", () => {
   it("bookmarks a Lesson, then removes the Bookmark on the second toggle", () => {
     const student = base.user.id;
 
-    expect(toggleBookmark(db, student, lessonIds[0], NOW)).toBe(true);
+    expect(
+      toggleBookmark(db, { userId: student, lessonId: lessonIds[0], now: NOW })
+    ).toBe(true);
     expect(isBookmarked(db, student, lessonIds[0])).toBe(true);
 
-    expect(toggleBookmark(db, student, lessonIds[0], minutesAfter(1))).toBe(
-      false
-    );
+    expect(
+      toggleBookmark(db, {
+        userId: student,
+        lessonId: lessonIds[0],
+        now: minutesAfter(1),
+      })
+    ).toBe(false);
     expect(isBookmarked(db, student, lessonIds[0])).toBe(false);
   });
 
   it("never leaves two Bookmarks on the same Lesson", () => {
     const student = base.user.id;
-    toggleBookmark(db, student, lessonIds[0], NOW);
-    toggleBookmark(db, student, lessonIds[0], minutesAfter(1));
-    toggleBookmark(db, student, lessonIds[0], minutesAfter(2));
+    toggleBookmark(db, { userId: student, lessonId: lessonIds[0], now: NOW });
+    toggleBookmark(db, {
+      userId: student,
+      lessonId: lessonIds[0],
+      now: minutesAfter(1),
+    });
+    toggleBookmark(db, {
+      userId: student,
+      lessonId: lessonIds[0],
+      now: minutesAfter(2),
+    });
 
     expect(listBookmarks(db, student)).toHaveLength(1);
   });
 
   it("is refused by the database when a second Bookmark is inserted directly", () => {
     const student = base.user.id;
-    toggleBookmark(db, student, lessonIds[0], NOW);
+    toggleBookmark(db, { userId: student, lessonId: lessonIds[0], now: NOW });
 
     expect(() =>
       db
@@ -94,13 +108,12 @@ describe("toggling a Bookmark", () => {
 
 describe("saving a Note", () => {
   it("creates the Note when there is none", () => {
-    const result = saveNote(
-      db,
-      base.user.id,
-      lessonIds[0],
-      "  First go  ",
-      NOW
-    );
+    const result = saveNote(db, {
+      userId: base.user.id,
+      lessonId: lessonIds[0],
+      body: "  First go  ",
+      now: NOW,
+    });
 
     expect(result).toEqual({ ok: true });
     expect(getNote(db, base.user.id, lessonIds[0])).toEqual({
@@ -110,8 +123,18 @@ describe("saving a Note", () => {
   });
 
   it("replaces the body and moves the last-edited time on", () => {
-    saveNote(db, base.user.id, lessonIds[0], "First go", NOW);
-    saveNote(db, base.user.id, lessonIds[0], "Second go", minutesAfter(5));
+    saveNote(db, {
+      userId: base.user.id,
+      lessonId: lessonIds[0],
+      body: "First go",
+      now: NOW,
+    });
+    saveNote(db, {
+      userId: base.user.id,
+      lessonId: lessonIds[0],
+      body: "Second go",
+      now: minutesAfter(5),
+    });
 
     expect(getNote(db, base.user.id, lessonIds[0])).toEqual({
       body: "Second go",
@@ -121,7 +144,12 @@ describe("saving a Note", () => {
   });
 
   it("is refused by the database when a second Note is inserted directly", () => {
-    saveNote(db, base.user.id, lessonIds[0], "First go", NOW);
+    saveNote(db, {
+      userId: base.user.id,
+      lessonId: lessonIds[0],
+      body: "First go",
+      now: NOW,
+    });
 
     expect(() =>
       db
@@ -134,22 +162,33 @@ describe("saving a Note", () => {
   it("accepts a Note of exactly 2,000 characters", () => {
     const body = "a".repeat(MAX_NOTE_LENGTH);
 
-    expect(saveNote(db, base.user.id, lessonIds[0], body, NOW)).toEqual({
+    expect(
+      saveNote(db, {
+        userId: base.user.id,
+        lessonId: lessonIds[0],
+        body: body,
+        now: NOW,
+      })
+    ).toEqual({
       ok: true,
     });
     expect(getNote(db, base.user.id, lessonIds[0])?.body).toBe(body);
   });
 
   it("refuses a Note over 2,000 characters and keeps the old one", () => {
-    saveNote(db, base.user.id, lessonIds[0], "Keep me", NOW);
+    saveNote(db, {
+      userId: base.user.id,
+      lessonId: lessonIds[0],
+      body: "Keep me",
+      now: NOW,
+    });
 
-    const result = saveNote(
-      db,
-      base.user.id,
-      lessonIds[0],
-      "a".repeat(MAX_NOTE_LENGTH + 1),
-      minutesAfter(1)
-    );
+    const result = saveNote(db, {
+      userId: base.user.id,
+      lessonId: lessonIds[0],
+      body: "a".repeat(MAX_NOTE_LENGTH + 1),
+      now: minutesAfter(1),
+    });
 
     expect(result).toEqual({
       ok: false,
@@ -159,13 +198,12 @@ describe("saving a Note", () => {
   });
 
   it("keeps Markdown characters exactly as typed", () => {
-    saveNote(
-      db,
-      base.user.id,
-      lessonIds[0],
-      "# not a heading\n*not bold*",
-      NOW
-    );
+    saveNote(db, {
+      userId: base.user.id,
+      lessonId: lessonIds[0],
+      body: "# not a heading\n*not bold*",
+      now: NOW,
+    });
 
     expect(getNote(db, base.user.id, lessonIds[0])?.body).toBe(
       "# not a heading\n*not bold*"
@@ -173,8 +211,18 @@ describe("saving a Note", () => {
   });
 
   it("clears the Note when saved empty", () => {
-    saveNote(db, base.user.id, lessonIds[0], "Something", NOW);
-    saveNote(db, base.user.id, lessonIds[0], "   ", minutesAfter(1));
+    saveNote(db, {
+      userId: base.user.id,
+      lessonId: lessonIds[0],
+      body: "Something",
+      now: NOW,
+    });
+    saveNote(db, {
+      userId: base.user.id,
+      lessonId: lessonIds[0],
+      body: "   ",
+      now: minutesAfter(1),
+    });
 
     expect(getNote(db, base.user.id, lessonIds[0])).toBeUndefined();
   });
@@ -185,15 +233,42 @@ describe("the Saved lists", () => {
     const student = base.user.id;
     const other = addStudent("Olive").id;
 
-    toggleBookmark(db, student, lessonIds[0], NOW);
-    toggleBookmark(db, student, lessonIds[1], minutesAfter(1));
-    toggleBookmark(db, other, lessonIds[2], minutesAfter(2));
+    toggleBookmark(db, { userId: student, lessonId: lessonIds[0], now: NOW });
+    toggleBookmark(db, {
+      userId: student,
+      lessonId: lessonIds[1],
+      now: minutesAfter(1),
+    });
+    toggleBookmark(db, {
+      userId: other,
+      lessonId: lessonIds[2],
+      now: minutesAfter(2),
+    });
 
-    saveNote(db, student, lessonIds[0], "Older note", NOW);
-    saveNote(db, student, lessonIds[1], "Newer note", minutesAfter(1));
-    saveNote(db, other, lessonIds[2], "Not yours", minutesAfter(2));
-    // Editing the older Note brings it to the top.
-    saveNote(db, student, lessonIds[0], "Edited note", minutesAfter(3));
+    saveNote(db, {
+      userId: student,
+      lessonId: lessonIds[0],
+      body: "Older note",
+      now: NOW,
+    });
+    saveNote(db, {
+      userId: student,
+      lessonId: lessonIds[1],
+      body: "Newer note",
+      now: minutesAfter(1),
+    });
+    saveNote(db, {
+      userId: other,
+      lessonId: lessonIds[2],
+      body: "Not yours",
+      now: minutesAfter(2),
+    });
+    saveNote(db, {
+      userId: student,
+      lessonId: lessonIds[0],
+      body: "Edited note",
+      now: minutesAfter(3),
+    });
 
     expect(listBookmarks(db, student)).toMatchObject([
       {
@@ -244,8 +319,13 @@ describe("approving a Refund Request", () => {
       .values({ userId: student, courseId: base.course.id })
       .run();
 
-    toggleBookmark(db, student, lessonIds[0], NOW);
-    saveNote(db, student, lessonIds[0], "Still here", NOW);
+    toggleBookmark(db, { userId: student, lessonId: lessonIds[0], now: NOW });
+    saveNote(db, {
+      userId: student,
+      lessonId: lessonIds[0],
+      body: "Still here",
+      now: NOW,
+    });
 
     const raised = raiseRefundRequest(
       db,

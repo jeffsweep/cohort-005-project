@@ -5,19 +5,11 @@ import * as schema from "~/db/schema";
 import { bookmarks, courses, lessons, modules, notes } from "~/db/schema";
 
 // ─── Bookmarks and Notes ───
-// What a Student attaches to a Lesson for themselves: a Bookmark (a flag) and a
-// Note (their own writing). Both are one per Student per Lesson, enforced by a
-// unique index. A Note is private to the Student who wrote it — nothing here
-// reads another Student's rows. See GLOSSARY.md.
-//
-// Every function takes the database first, so tests can hand in an in-memory
-// one. Content access is the caller's job (requireContentAccess in the action).
 
 export type Db = BetterSQLite3Database<typeof schema>;
 
 export const MAX_NOTE_LENGTH = 2000;
 
-// Plain text, trimmed. Never rendered as Markdown.
 const noteBodySchema = z
   .string()
   .trim()
@@ -29,19 +21,23 @@ const noteBodySchema = z
 // ─── Bookmarks ───
 
 export function isBookmarked(db: Db, userId: number, lessonId: number) {
-  return !!db
+  const bookmark = db
     .select({ id: bookmarks.id })
     .from(bookmarks)
     .where(and(eq(bookmarks.userId, userId), eq(bookmarks.lessonId, lessonId)))
     .get();
+  return bookmark !== undefined;
 }
 
-// Returns whether the Lesson is bookmarked afterwards.
+export type ToggleBookmarkParams = {
+  userId: number;
+  lessonId: number;
+  now: Date;
+};
+
 export function toggleBookmark(
   db: Db,
-  userId: number,
-  lessonId: number,
-  now: Date
+  { userId, lessonId, now }: ToggleBookmarkParams
 ) {
   const removed = db
     .delete(bookmarks)
@@ -69,14 +65,16 @@ export function getNote(db: Db, userId: number, lessonId: number) {
 
 export type SaveNoteResult = { ok: true } | { ok: false; error: string };
 
-// Creates the Note, or replaces its body and moves updatedAt on. An empty box
-// clears the Note. An over-long body is refused, never truncated.
+export type SaveNoteParams = {
+  userId: number;
+  lessonId: number;
+  body: string;
+  now: Date;
+};
+
 export function saveNote(
   db: Db,
-  userId: number,
-  lessonId: number,
-  body: string,
-  now: Date
+  { userId, lessonId, body, now }: SaveNoteParams
 ): SaveNoteResult {
   const parsed = noteBodySchema.safeParse(body);
   if (!parsed.success) {
@@ -116,7 +114,6 @@ const lessonRef = {
   courseSlug: courses.slug,
 };
 
-// The Student's own Bookmarks, newest first.
 export function listBookmarks(db: Db, userId: number) {
   return db
     .select({ id: bookmarks.id, createdAt: bookmarks.createdAt, ...lessonRef })
@@ -129,7 +126,6 @@ export function listBookmarks(db: Db, userId: number) {
     .all();
 }
 
-// The Student's own Notes, most recently edited first.
 export function listNotes(db: Db, userId: number) {
   return db
     .select({

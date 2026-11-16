@@ -17,6 +17,7 @@ import {
   isBookmarked,
   saveNote,
   toggleBookmark,
+  type SaveNoteResult,
 } from "~/lib/bookmarks-and-notes.server";
 import { db } from "~/db";
 import {
@@ -89,8 +90,6 @@ const editCommentSchema = z.object({
   body: z.string(),
 });
 
-// The 2,000-character cap is checked by saveNote, so it is refused with a
-// message rather than failing the parse.
 const saveNoteSchema = z.object({
   intent: z.literal("save-note"),
   body: z.string(),
@@ -791,8 +790,6 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     ? await renderThread(getLessonThread(lessonId))
     : [];
 
-  // Only the current Student's own Bookmark and Note. A signed-out visitor
-  // gets neither.
   const bookmarked = currentUserId
     ? isBookmarked(db, currentUserId, lessonId)
     : false;
@@ -973,9 +970,6 @@ export async function action({ params, request }: Route.ActionArgs) {
     }
   }
 
-  // Bookmark and Note intents re-check access here, the same as the comment
-  // intents, and make sure the Lesson belongs to this Course so access to one
-  // Course can't be used to reach another's Lessons.
   if (intent === "toggle-bookmark" || intent === "save-note") {
     await requireContentAccess(request, course.id);
 
@@ -988,7 +982,11 @@ export async function action({ params, request }: Route.ActionArgs) {
     if (intent === "toggle-bookmark") {
       return {
         ok: true,
-        bookmarked: toggleBookmark(db, currentUserId, lessonId, new Date()),
+        bookmarked: toggleBookmark(db, {
+          userId: currentUserId,
+          lessonId,
+          now: new Date(),
+        }),
       };
     }
 
@@ -996,7 +994,12 @@ export async function action({ params, request }: Route.ActionArgs) {
     if (!parsed.success) {
       throw data("Invalid note", { status: 400 });
     }
-    return saveNote(db, currentUserId, lessonId, parsed.data.body, new Date());
+    return saveNote(db, {
+      userId: currentUserId,
+      lessonId,
+      body: parsed.data.body,
+      now: new Date(),
+    });
   }
 
   if (intent === "mark-complete") {
@@ -1386,12 +1389,12 @@ function BookmarkToggle({ bookmarked }: { bookmarked: boolean }) {
   );
 }
 
-function LessonNote({
-  note,
-}: {
+type LessonNoteProps = {
   note: { body: string; updatedAt: string } | null;
-}) {
-  const fetcher = useFetcher<{ ok: true } | { ok: false; error: string }>();
+};
+
+function LessonNote({ note }: LessonNoteProps) {
+  const fetcher = useFetcher<SaveNoteResult>();
   const isSaving = fetcher.state !== "idle";
   const error = fetcher.data?.ok === false ? fetcher.data.error : undefined;
 
@@ -1407,7 +1410,6 @@ function LessonNote({
           method="post"
           className="space-y-3"
           onSubmit={(event) => {
-            // Saving an empty box deletes the Note, so ask first.
             const body = new FormData(event.currentTarget).get("body");
             if (
               note &&
@@ -1420,7 +1422,6 @@ function LessonNote({
           }}
         >
           <input type="hidden" name="intent" value="save-note" />
-          {/* Plain text only — a Note is never rendered as Markdown. */}
           <Textarea
             name="body"
             rows={6}
