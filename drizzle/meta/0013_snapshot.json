@@ -1,7 +1,7 @@
 {
   "version": "6",
   "dialect": "sqlite",
-  "id": "ed704569-0c73-44a1-8f1d-460c893b410c",
+  "id": "8a3b85e2-1fcf-40d6-9cd2-019cfbe3caba",
   "prevId": "03bdab95-146b-4563-b29b-f189a2cff09d",
   "tables": {
     "bookmarks": {
@@ -70,7 +70,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },
@@ -992,7 +992,7 @@
           "columnsTo": [
             "id"
           ],
-          "onDelete": "no action",
+          "onDelete": "cascade",
           "onUpdate": "no action"
         }
       },

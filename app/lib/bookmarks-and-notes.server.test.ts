@@ -1,4 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
+import { eq } from "drizzle-orm";
 import { createTestDb, seedBaseData } from "~/test/setup";
 import * as schema from "~/db/schema";
 import { UserRole } from "~/db/schema";
@@ -346,5 +347,24 @@ describe("approving a Refund Request", () => {
     expect(approved.ok).toBe(true);
     expect(isBookmarked(db, student, lessonIds[0])).toBe(true);
     expect(getNote(db, student, lessonIds[0])?.body).toBe("Still here");
+  });
+});
+
+describe("deleting a Lesson", () => {
+  it("removes its Bookmarks and Notes and leaves other Lessons' alone", () => {
+    const student = base.user.id;
+    for (const lessonId of [lessonIds[0], lessonIds[1]]) {
+      toggleBookmark(db, { userId: student, lessonId, now: NOW });
+      saveNote(db, { userId: student, lessonId, body: "Mine", now: NOW });
+    }
+
+    db.delete(schema.lessons).where(eq(schema.lessons.id, lessonIds[0])).run();
+
+    expect(listBookmarks(db, student).map((row) => row.lessonId)).toEqual([
+      lessonIds[1],
+    ]);
+    expect(listNotes(db, student).map((row) => row.lessonId)).toEqual([
+      lessonIds[1],
+    ]);
   });
 });
