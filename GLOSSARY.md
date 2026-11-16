@@ -112,3 +112,16 @@ _Avoid_: Alert, Activity, Message
 **Muted**:
 A kind of Notification a person has turned off. They don't get it at all, and turning it back on doesn't bring back the ones they missed.
 _Avoid_: Unsubscribed, Disabled, Snoozed
+
+### Bookmarks and Notes
+
+**Bookmark**:
+A Student's flag on a Lesson, so they can find it again. One per Student per
+Lesson.
+_Avoid_: Favourite, star, saved item
+
+**Note**:
+A Student's own writing about a Lesson, private to the Student who wrote it.
+One per Student per Lesson. A Note is not a Comment — a Comment is addressed
+to other people, a Note is addressed to nobody.
+_Avoid_: Annotation, scratchpad, memo
