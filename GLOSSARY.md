@@ -15,12 +15,24 @@ A person who builds and owns courses, and sees the Students enrolled on them.
 _Avoid_: Teacher, Author, Creator
 
 **Platform Admin**:
-A member of Cadence staff who runs the platform. Only a Platform Admin decides Refund Requests.
+A member of Cadence staff who runs the platform. On every course, a Platform Admin may do whatever its Instructor may. Only a Platform Admin decides Refund Requests.
 _Avoid_: Admin (on its own), the team, Staff
+
+**Course Owner**:
+The course's Instructor or a Platform Admin: someone who may do anything on that course.
+_Avoid_: Staff
 
 **Team Admin**:
 A Student who buys and manages a Team Licence. A Team Admin has no say over Refund Requests.
 _Avoid_: Admin (on its own)
+
+### Courses
+
+**Draft Course**:
+A course its Instructor is still building. Only its Instructor and Platform Admins can see it, and nobody can buy it.
+
+**Archived Course**:
+A course that is no longer sold. Students with an Enrollment keep it; nobody new can buy it or claim a Seat on it.
 
 ### Enrollment
 
@@ -29,7 +41,7 @@ A Student's place on a course, which lets them take it. A Student has at most on
 _Avoid_: Place on a course, Access
 
 **Lapsed**:
-A Student who has lost their Enrollment on a course but still has progress on it.
+A Student who has lost their Enrollment on a course but still has progress, Bookmarks and Notes on it.
 
 **Watched**:
 Seconds of video a Student has actually played in a course: the furthest point reached in each lesson, added up. Not lessons opened.
