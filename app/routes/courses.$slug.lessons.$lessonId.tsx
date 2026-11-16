@@ -1010,7 +1010,6 @@ export async function action({ params, request }: Route.ActionArgs) {
     if (!result.ok) {
       throw data(result.error, { status: 400 });
     }
-
     return { ok: true };
   }
 
@@ -1407,7 +1406,6 @@ type LessonNoteProps = {
 
 function isEmptyNoteBody(form: HTMLFormElement) {
   const body = new FormData(form).get("body");
-
   return typeof body === "string" && body.trim().length === 0;
 }
 

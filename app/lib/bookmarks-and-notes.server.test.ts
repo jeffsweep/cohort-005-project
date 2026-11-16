@@ -85,6 +85,7 @@ describe("toggling a Bookmark", () => {
       lessonId: lessonIds[0],
       now: minutesAfter(1),
     });
+
     toggleBookmark(db, {
       userId: student,
       lessonId: lessonIds[0],
@@ -130,6 +131,7 @@ describe("saving a Note", () => {
       body: "First go",
       now: NOW,
     });
+
     saveNote(db, {
       userId: base.user.id,
       lessonId: lessonIds[0],
@@ -218,6 +220,7 @@ describe("saving a Note", () => {
       body: "Something",
       now: NOW,
     });
+
     saveNote(db, {
       userId: base.user.id,
       lessonId: lessonIds[0],
@@ -240,6 +243,7 @@ describe("the Saved lists", () => {
       lessonId: lessonIds[1],
       now: minutesAfter(1),
     });
+
     toggleBookmark(db, {
       userId: other,
       lessonId: lessonIds[2],
@@ -252,18 +256,21 @@ describe("the Saved lists", () => {
       body: "Older note",
       now: NOW,
     });
+
     saveNote(db, {
       userId: student,
       lessonId: lessonIds[1],
       body: "Newer note",
       now: minutesAfter(1),
     });
+
     saveNote(db, {
       userId: other,
       lessonId: lessonIds[2],
       body: "Not yours",
       now: minutesAfter(2),
     });
+
     saveNote(db, {
       userId: student,
       lessonId: lessonIds[0],
@@ -306,6 +313,7 @@ describe("approving a Refund Request", () => {
       })
       .returning()
       .get();
+
     const purchase = db
       .insert(schema.purchases)
       .values({
@@ -316,6 +324,7 @@ describe("approving a Refund Request", () => {
       })
       .returning()
       .get();
+
     db.insert(schema.enrollments)
       .values({ userId: student, courseId: base.course.id })
       .run();
@@ -363,6 +372,7 @@ describe("deleting a Lesson", () => {
     expect(listBookmarks(db, student).map((row) => row.lessonId)).toEqual([
       lessonIds[1],
     ]);
+
     expect(listNotes(db, student).map((row) => row.lessonId)).toEqual([
       lessonIds[1],
     ]);

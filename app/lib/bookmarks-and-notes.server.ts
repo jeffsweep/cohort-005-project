@@ -21,7 +21,6 @@ export function isBookmarked(db: Db, userId: number, lessonId: number) {
     .from(bookmarks)
     .where(and(eq(bookmarks.userId, userId), eq(bookmarks.lessonId, lessonId)))
     .get();
-
   return bookmark !== undefined;
 }
 
@@ -40,14 +39,12 @@ export function toggleBookmark(
     .where(and(eq(bookmarks.userId, userId), eq(bookmarks.lessonId, lessonId)))
     .returning()
     .all();
-
   if (removed.length > 0) return false;
 
   db.insert(bookmarks)
     .values({ userId, lessonId, createdAt: now.toISOString() })
     .onConflictDoNothing()
     .run();
-
   return true;
 }
 
@@ -81,12 +78,10 @@ export function saveNote(
     db.delete(notes)
       .where(and(eq(notes.userId, userId), eq(notes.lessonId, lessonId)))
       .run();
-
     return { ok: true };
   }
 
   const at = now.toISOString();
-
   db.insert(notes)
     .values({
       userId,
@@ -100,7 +95,6 @@ export function saveNote(
       set: { body: parsed.data, updatedAt: at },
     })
     .run();
-
   return { ok: true };
 }
 
