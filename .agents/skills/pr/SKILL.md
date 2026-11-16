@@ -167,4 +167,10 @@ Execution-based evidence is A-tier. Test results, console output. Show the exact
 
 Describe whether it's a one-way or two-way door. You can walk back through two-way doors, but not one-way doors. A PR that is cheap to roll back is lower risk. Changes that involve destructive actions or hard-to-reverse decisions are one-way doors.
 
+Judge schema changes as if the database keeps its data, even where the dev database is disposable.
+
 The blast radius is the potential impact or scope of the changes introduced by this PR. Consider all possibilities. Examples are layout shift, breakages for consumers, mobile responsiveness, etc.
+
+## Publishing
+
+Keep the body in a scratch file. Change it with the Edit tool, then publish with `gh pr edit <n> --body-file <file>`. Shell heredocs and Python string literals mangle backticks.

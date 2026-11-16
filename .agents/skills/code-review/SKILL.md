@@ -79,6 +79,10 @@ Present the two reports under `## Standards` and `## Spec` headings, verbatim or
 
 End with a one-line summary: total findings per axis, and the worst issue _within each axis_ (if any). Don't pick a single winner across axes: that's the reranking the separation exists to prevent.
 
+### 6. When the user asks you to fix the findings
+
+After the fixes pass `npm run check`, spawn the Standards sub-agent once more on the fix diff alone (`git diff <pre-fix HEAD>`), with the original findings attached. Its brief: "For each finding, is it gone in the code, not just moved? Cite the line." A finding counts as fixed only when this re-review says so.
+
 ## Why two axes
 
 A change can pass one axis and fail the other:
