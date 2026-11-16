@@ -23,3 +23,27 @@ is a lie the type checker believes.
 Both switch the type checker off at the exact point you are least sure. If a
 value can be missing, narrow it with a check. If you cannot name the type,
 the shape is wrong — fix the shape.
+
+## Comments say why, not what
+
+A comment earns its place by saying something the code cannot: a reason, a
+constraint, a gotcha. Name the function or variable instead of narrating
+what the next lines do.
+
+## Name a condition with three or more parts
+
+When an `if` joins three or more checks, pull it into a named function or
+variable that says what it asks. An inline
+event handler with such a condition becomes a named handler.
+
+## Database writes take one object of named values
+
+A service function that writes takes `db` first, then one object:
+`saveNote(db, { userId, lessonId, body, now })`. Two ids side by side are
+easy to swap; named fields are not.
+
+## A new foreign key says what happens on delete
+
+Every new `.references()` sets `onDelete`. Decide whether the row goes with
+its parent (`"cascade"`) or blocks the delete, and write it down, so deleting
+a Lesson or a User never fails on rows nobody thought about.
