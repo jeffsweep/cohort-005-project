@@ -113,10 +113,6 @@ _Avoid_: Alert, Activity, Message
 A kind of Notification a person has turned off. They don't get it at all, and turning it back on doesn't bring back the ones they missed.
 _Avoid_: Unsubscribed, Disabled, Snoozed
 
-**Notification Feed**:
-The place inside Cadence where a person sees their Notifications.
-_Avoid_: Inbox, Activity feed
-
 ### Bookmarks and Notes
 
 **Bookmark**:
