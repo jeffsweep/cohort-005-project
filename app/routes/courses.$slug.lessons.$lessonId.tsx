@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, type FormEvent } from "react";
 import { Link, useFetcher, useNavigate } from "react-router";
 import { toast } from "sonner";
 import type { Route } from "./+types/courses.$slug.lessons.$lessonId";
@@ -794,6 +794,7 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     canViewContent && currentUserId
       ? isBookmarked(db, currentUserId, lessonId)
       : false;
+
   const note =
     canViewContent && currentUserId
       ? getNote(db, currentUserId, lessonId)
@@ -998,15 +999,18 @@ export async function action({ params, request }: Route.ActionArgs) {
     if (!parsed.success) {
       throw data("Invalid note", { status: 400 });
     }
+
     const result = saveNote(db, {
       userId: currentUserId,
       lessonId,
       body: parsed.data.body,
       now: new Date(),
     });
+
     if (!result.ok) {
       throw data(result.error, { status: 400 });
     }
+
     return { ok: true };
   }
 
@@ -1401,9 +1405,20 @@ type LessonNoteProps = {
   note: { body: string; updatedAt: string } | null;
 };
 
+function isEmptyNoteBody(form: HTMLFormElement) {
+  const body = new FormData(form).get("body");
+
+  return typeof body === "string" && body.trim().length === 0;
+}
+
 function LessonNote({ note }: LessonNoteProps) {
   const fetcher = useFetcher();
   const isSaving = fetcher.state !== "idle";
+
+  function confirmDeleteOnEmptySave(event: FormEvent<HTMLFormElement>) {
+    if (!note || !isEmptyNoteBody(event.currentTarget)) return;
+    if (!confirm("Delete this note?")) event.preventDefault();
+  }
 
   return (
     <Card className="mb-8">
@@ -1416,21 +1431,12 @@ function LessonNote({ note }: LessonNoteProps) {
         <fetcher.Form
           method="post"
           className="space-y-3"
-          onSubmit={(event) => {
-            const body = new FormData(event.currentTarget).get("body");
-            if (
-              note &&
-              typeof body === "string" &&
-              body.trim().length === 0 &&
-              !confirm("Delete this note?")
-            ) {
-              event.preventDefault();
-            }
-          }}
+          onSubmit={confirmDeleteOnEmptySave}
         >
           <input type="hidden" name="intent" value="save-note" />
           <Textarea
             name="body"
+            aria-label="Note"
             rows={6}
             maxLength={MAX_NOTE_LENGTH}
             defaultValue={note?.body ?? ""}
