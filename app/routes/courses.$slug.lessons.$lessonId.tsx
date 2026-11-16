@@ -17,8 +17,8 @@ import {
   isBookmarked,
   saveNote,
   toggleBookmark,
-  type SaveNoteResult,
 } from "~/lib/bookmarks-and-notes.server";
+import { MAX_NOTE_LENGTH } from "~/lib/notes";
 import { db } from "~/db";
 import {
   categories,
@@ -790,10 +790,14 @@ export async function loader({ params, request }: Route.LoaderArgs) {
     ? await renderThread(getLessonThread(lessonId))
     : [];
 
-  const bookmarked = currentUserId
-    ? isBookmarked(db, currentUserId, lessonId)
-    : false;
-  const note = currentUserId ? getNote(db, currentUserId, lessonId) : undefined;
+  const bookmarked =
+    canViewContent && currentUserId
+      ? isBookmarked(db, currentUserId, lessonId)
+      : false;
+  const note =
+    canViewContent && currentUserId
+      ? getNote(db, currentUserId, lessonId)
+      : undefined;
 
   // Render lesson content from Markdown to HTML server-side
   const contentHtml = lesson.content
@@ -994,12 +998,16 @@ export async function action({ params, request }: Route.ActionArgs) {
     if (!parsed.success) {
       throw data("Invalid note", { status: 400 });
     }
-    return saveNote(db, {
+    const result = saveNote(db, {
       userId: currentUserId,
       lessonId,
       body: parsed.data.body,
       now: new Date(),
     });
+    if (!result.ok) {
+      throw data(result.error, { status: 400 });
+    }
+    return { ok: true };
   }
 
   if (intent === "mark-complete") {
@@ -1394,9 +1402,8 @@ type LessonNoteProps = {
 };
 
 function LessonNote({ note }: LessonNoteProps) {
-  const fetcher = useFetcher<SaveNoteResult>();
+  const fetcher = useFetcher();
   const isSaving = fetcher.state !== "idle";
-  const error = fetcher.data?.ok === false ? fetcher.data.error : undefined;
 
   return (
     <Card className="mb-8">
@@ -1425,6 +1432,7 @@ function LessonNote({ note }: LessonNoteProps) {
           <Textarea
             name="body"
             rows={6}
+            maxLength={MAX_NOTE_LENGTH}
             defaultValue={note?.body ?? ""}
             placeholder="Only you can read this."
             className="resize-y"
@@ -1441,7 +1449,6 @@ function LessonNote({ note }: LessonNoteProps) {
                 Last edited {formatRelativeTime(note.updatedAt)}
               </span>
             )}
-            {error && <span className="text-sm text-red-600">{error}</span>}
           </div>
         </fetcher.Form>
       </CardContent>

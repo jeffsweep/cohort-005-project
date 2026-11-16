@@ -117,7 +117,7 @@ _Avoid_: Unsubscribed, Disabled, Snoozed
 
 **Bookmark**:
 A Student's flag on a Lesson, so they can find it again. One per Student per
-Lesson, and the Student is the only one who sees it.
+Lesson.
 _Avoid_: Favourite, star, saved item
 
 **Note**:

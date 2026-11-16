@@ -2,8 +2,8 @@ import { describe, it, expect, beforeEach } from "vitest";
 import { createTestDb, seedBaseData } from "~/test/setup";
 import * as schema from "~/db/schema";
 import { UserRole } from "~/db/schema";
+import { MAX_NOTE_LENGTH } from "~/lib/notes";
 import {
-  MAX_NOTE_LENGTH,
   getNote,
   isBookmarked,
   listBookmarks,

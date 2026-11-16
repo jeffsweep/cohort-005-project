@@ -3,12 +3,11 @@ import type { BetterSQLite3Database } from "drizzle-orm/better-sqlite3";
 import { z } from "zod";
 import * as schema from "~/db/schema";
 import { bookmarks, courses, lessons, modules, notes } from "~/db/schema";
+import { MAX_NOTE_LENGTH } from "~/lib/notes";
 
 // ─── Bookmarks and Notes ───
 
 export type Db = BetterSQLite3Database<typeof schema>;
-
-export const MAX_NOTE_LENGTH = 2000;
 
 const noteBodySchema = z
   .string()
