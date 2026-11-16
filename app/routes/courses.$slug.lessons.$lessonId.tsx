@@ -1403,7 +1403,22 @@ function LessonNote({
           <h2 className="font-semibold">Your notes</h2>
         </div>
 
-        <fetcher.Form method="post" className="space-y-3">
+        <fetcher.Form
+          method="post"
+          className="space-y-3"
+          onSubmit={(event) => {
+            // Saving an empty box deletes the Note, so ask first.
+            const body = new FormData(event.currentTarget).get("body");
+            if (
+              note &&
+              typeof body === "string" &&
+              body.trim().length === 0 &&
+              !confirm("Delete this note?")
+            ) {
+              event.preventDefault();
+            }
+          }}
+        >
           <input type="hidden" name="intent" value="save-note" />
           {/* Plain text only — a Note is never rendered as Markdown. */}
           <Textarea
