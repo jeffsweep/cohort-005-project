@@ -14,25 +14,23 @@
  * routes, also save their selected model. Every other choice keeps behaving
  * exactly as described above.
  *
- * This is glue, not logic. The decisions all live in agents.ts, which is where
- * the tests are.
+ * This is glue, not logic. The decisions all live in agents.ts and the modules
+ * it reads from, which is where the tests are.
  */
 
 import fs from "node:fs";
 import { styleText } from "node:util";
 import { cancel, confirm, isCancel, intro, select, text } from "@clack/prompts";
+import type { AgentChoice, RendererId } from "./agent-types";
+import { agentProviders, listAgents } from "./agents";
 import {
-  agentProviders,
   CUSTOM_ID,
   CUSTOM_LABEL,
-  customTargetNeedsModel,
-  listAgents,
   OTHER_ID,
   OTHER_LABEL,
   WIRE_FORMAT_OPTIONS,
-  type AgentChoice,
-  type RendererId,
-} from "./agents";
+} from "./choice-options";
+import { customTargetNeedsModel } from "./custom-target";
 import { discoverModelIds } from "./model-discovery";
 
 export interface WizardAnswer {

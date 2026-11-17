@@ -348,7 +348,7 @@ Be fair to the tool when you judge a failure.
   (`config.json`, custom proxies, and CLI reference). It has not been driven
   against a real Junie install. If the proxy `kind`, the config file's
   precise shape, or the header format is wrong, that is the likely reason,
-  and the fix is one line in `agents.ts`.
+  and the fix is one line in `catalogue/junie.ts`.
 - **Antigravity CLI is verified against published docs only, the same way
   Junie is.** Antigravity CLI is also closed source. Its API-key route was
   checked against Google's own Antigravity CLI documentation (installation,
@@ -357,31 +357,32 @@ Be fair to the tool when you judge a failure.
   at all — see "Antigravity CLI" above for why that route is left out.
 - **A custom base URL is only as tested as the agent it is attached to.** The
   base URL and wire format mechanism itself is tested directly (see
-  `agents.test.ts`); a specific third-party server behind it has not
+  `custom-target.test.ts`); a specific third-party server behind it has not
   necessarily been driven end to end.
 - **Windows is not tested end to end either.** WSL and Git Bash need no
   special handling — they are POSIX shells, so they use the same command as
   Mac and Linux. Native PowerShell gets its own `$env:NAME = 'value'` syntax
-  instead (see `withEnv` in `agents.ts`), verified by unit test but not by
+  instead (see `withEnv` in `command.ts`), verified by unit test but not by
   running a real agent against it on Windows. Command Prompt (`cmd.exe`) is
   not supported; use PowerShell, which is the default terminal in Windows
   Terminal and VS Code.
 
 If one of them is wrong, it is worth reporting, and the fix is likely to be one
-line in `agents.ts`.
+line in that agent's file under `catalogue/`.
 
 ## Extending it
 
-- **Add an agent:** add one entry to the catalogue in `agents.ts`, giving its
-  upstream host, its renderer, its base URL suffix, and its command. That is the
-  whole job. The wizard, the banner and the routing all read from there, so
-  nothing else needs to change.
+- **Add an agent:** add one file to `catalogue/`, giving its upstream host,
+  its renderer, its base URL suffix, and its command, and list it in
+  `catalogue/all-agents.ts`. That is the whole job. The wizard, the banner and
+  the routing all read from there, so nothing else needs to change.
 - **Add an agent with no fixed upstream at all**, the way OMP has none: give it
   no upstream host, set `alwaysCustom: true`, and give its one provider entry a
   bin and a setup file. The wizard then skips the provider question for it
   entirely and asks the two custom-base-url questions directly. See the OMP
-  entry in `agents.ts` for the whole shape.
-- **Add a wire format:** add a renderer in `render.ts` and name it on the
+  entry in `catalogue/omp.ts` for the whole shape.
+- **Add a wire format:** add a renderer beside `render.ts` (see
+  `render-openai.ts`), dispatch to it from `render.ts`, and name it on the
   catalogue entry. Unknown shapes already fall back to pretty-printed JSON, so
   you can iterate safely.
 - **Watch the base URL suffix.** It is per-agent on purpose and never a global
