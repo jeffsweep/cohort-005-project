@@ -1,22 +1,38 @@
 # Must finish in under 3 seconds, so each check runs on what is staged, all at
 # once. Typecheck is too slow for that; the full npm run check runs on pre-push.
+# Each check's output is held back and printed under its own heading, so
+# parallel runs do not interleave.
 bin=node_modules/.bin
 staged=$(git diff --cached --name-only --diff-filter=ACMR)
 staged_app=$(echo "$staged" | grep -E '^app/.*\.(ts|tsx)$' || true)
 staged_any=$(echo "$staged" | grep -v '^$' || true)
 staged_source=$(echo "$staged" | grep -E '\.(ts|tsx|js|jsx|cjs|mjs)$' || true)
 
-node scripts/check-staged-file-size.ts &
+out=$(mktemp -d)
+trap 'rm -rf "$out"' EXIT
+
+node scripts/check-staged-file-size.ts >"$out/size" 2>&1 &
 size=$!
-[ -z "$staged_any" ] || $bin/prettier --check --ignore-unknown $staged_any &
+[ -z "$staged_any" ] || $bin/prettier --check --ignore-unknown $staged_any >"$out/format" 2>&1 &
 format=$!
-[ -z "$staged_app" ] || $bin/depcruise $staged_app &
+[ -z "$staged_app" ] || $bin/depcruise --output-type err-long $staged_app >"$out/boundaries" 2>&1 &
 boundaries=$!
-[ -z "$staged_source" ] || $bin/vitest related --run --passWithNoTests $staged_source &
+[ -z "$staged_source" ] || $bin/vitest related --run --passWithNoTests $staged_source >"$out/tests" 2>&1 &
 tests=$!
 
-failed=0
-for pid in $size $format $boundaries $tests; do
-  wait $pid || failed=1
-done
-exit $failed
+failed=""
+report() {
+  if wait "$1"; then return; fi
+  failed="$failed\n  - $2: $3"
+  printf '\n━━━ %s ━━━\n' "$2"
+  cat "$out/$4"
+}
+report $size "Token cap" "split the files listed" size
+report $format "Formatting" "run: npx prettier --write <files>" format
+report $boundaries "Module boundaries" "import from the module's entry point instead" boundaries
+report $tests "Related tests" "fix the failing tests" tests
+
+if [ -n "$failed" ]; then
+  printf '\n━━━ Commit blocked ━━━%b\n\n' "$failed"
+  exit 1
+fi
