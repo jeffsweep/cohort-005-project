@@ -1,5 +1,7 @@
-# Must finish in under 3 seconds, so each check runs on what is staged, all at
-# once. Typecheck is too slow for that; the full npm run check runs on pre-push.
+# Must finish in about 3 seconds, so every check runs at once and the cheap
+# ones run only on what is staged. Typecheck uses tsgo (the Go port of tsc),
+# which checks the whole project in under 2 seconds. Tests are too slow to fit;
+# the full npm run check runs on pre-push.
 # Each check's output is held back and printed under its own heading, so
 # parallel runs do not interleave.
 bin=node_modules/.bin
@@ -7,18 +9,39 @@ staged=$(git diff --cached --name-only --diff-filter=ACMR)
 staged_app=$(echo "$staged" | grep -E '^app/.*\.(ts|tsx)$' || true)
 staged_any=$(echo "$staged" | grep -v '^$' || true)
 staged_source=$(echo "$staged" | grep -E '\.(ts|tsx|js|jsx|cjs|mjs)$' || true)
+# Route types depend only on the route config and which route files exist, not
+# on their contents, so typegen (0.8s) runs only when one of those changes.
+route_shape=$({
+  git diff --cached --name-only --diff-filter=ADR -- app/routes
+  git diff --cached --name-only -- app/routes.ts
+})
+[ -d .react-router/types ] || route_shape=missing
 
 out=$(mktemp -d)
 trap 'rm -rf "$out"' EXIT
 
+typecheck() {
+  if [ -n "$route_shape" ]; then $bin/react-router typegen || return; fi
+  $bin/tsgo --checkers 4
+}
+boundaries() {
+  # Past a few dozen files, cruising the folder is faster than resolving each.
+  if [ "$(echo "$staged_app" | wc -l)" -gt 40 ]; then set -- app; else set -- $staged_app; fi
+  $bin/depcruise --output-type err-long "$@"
+}
+
 node scripts/check-staged-file-size.ts >"$out/size" 2>&1 &
 size=$!
-[ -z "$staged_any" ] || $bin/prettier --check --ignore-unknown $staged_any >"$out/format" 2>&1 &
+git diff --cached --check >"$out/whitespace" 2>&1 &
+whitespace=$!
+[ -z "$staged_any" ] || $bin/prettier --check --ignore-unknown --cache $staged_any >"$out/format" 2>&1 &
 format=$!
-[ -z "$staged_app" ] || $bin/depcruise --output-type err-long $staged_app >"$out/boundaries" 2>&1 &
+[ -z "$staged_source" ] || $bin/oxlint $staged_source >"$out/lint" 2>&1 &
+lint=$!
+[ -z "$staged_app" ] || boundaries >"$out/boundaries" 2>&1 &
 boundaries=$!
-[ -z "$staged_source" ] || $bin/vitest related --run --passWithNoTests $staged_source >"$out/tests" 2>&1 &
-tests=$!
+[ -z "$staged_source" ] || typecheck >"$out/types" 2>&1 &
+types=$!
 
 failed=""
 report() {
@@ -28,9 +51,11 @@ report() {
   cat "$out/$4"
 }
 report $size "Token cap" "split the files listed" size
+report $whitespace "Whitespace" "remove trailing whitespace and conflict markers" whitespace
 report $format "Formatting" "run: npx prettier --write <files>" format
+report $lint "Lint" "fix the errors listed (warnings do not block)" lint
 report $boundaries "Module boundaries" "import from the module's entry point instead" boundaries
-report $tests "Related tests" "fix the failing tests" tests
+report $types "Types" "fix the type errors listed" types
 
 if [ -n "$failed" ]; then
   printf '\n━━━ Commit blocked ━━━%b\n\n' "$failed"
