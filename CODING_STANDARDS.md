@@ -92,7 +92,7 @@ a day on.
 ## Tests describe behaviour
 
 - Name a test for the behaviour, not the function: `"refuses a refund after
-  the window closes"`, not `"refund test 3"`.
+the window closes"`, not `"refund test 3"`.
 - Do not mock what you own. Use the real module.
 - Keep the fixture close to the test. A shared fixture that every test bends
   is worse than a little duplication.
