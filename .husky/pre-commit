@@ -3,17 +3,20 @@
 bin=node_modules/.bin
 staged=$(git diff --cached --name-only --diff-filter=ACMR)
 staged_app=$(echo "$staged" | grep -E '^app/.*\.(ts|tsx)$' || true)
+staged_any=$(echo "$staged" | grep -v '^$' || true)
 staged_source=$(echo "$staged" | grep -E '\.(ts|tsx|js|jsx|cjs|mjs)$' || true)
 
 node scripts/check-staged-file-size.ts &
 size=$!
+[ -z "$staged_any" ] || $bin/prettier --check --ignore-unknown $staged_any &
+format=$!
 [ -z "$staged_app" ] || $bin/depcruise $staged_app &
 boundaries=$!
 [ -z "$staged_source" ] || $bin/vitest related --run --passWithNoTests $staged_source &
 tests=$!
 
 failed=0
-for pid in $size $boundaries $tests; do
+for pid in $size $format $boundaries $tests; do
   wait $pid || failed=1
 done
 exit $failed
