@@ -1,1 +1,19 @@
-node scripts/check-staged-file-size.ts
+# Must finish in under 3 seconds, so each check runs on what is staged, all at
+# once. Typecheck is too slow for that; the full npm run check runs on pre-push.
+bin=node_modules/.bin
+staged=$(git diff --cached --name-only --diff-filter=ACMR)
+staged_app=$(echo "$staged" | grep -E '^app/.*\.(ts|tsx)$' || true)
+staged_source=$(echo "$staged" | grep -E '\.(ts|tsx|js|jsx|cjs|mjs)$' || true)
+
+node scripts/check-staged-file-size.ts &
+size=$!
+[ -z "$staged_app" ] || $bin/depcruise $staged_app &
+boundaries=$!
+[ -z "$staged_source" ] || $bin/vitest related --run --passWithNoTests $staged_source &
+tests=$!
+
+failed=0
+for pid in $size $boundaries $tests; do
+  wait $pid || failed=1
+done
+exit $failed
