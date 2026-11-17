@@ -1,1 +1,1 @@
-npm run check
+node scripts/check-staged-file-size.ts
