@@ -1,10 +1,5 @@
 import { execFileSync } from "node:child_process";
-import {
-  estimateTokens,
-  isSourceFile,
-  MAX_TOKENS,
-  OVER_BUDGET,
-} from "./file-size.ts";
+import { estimateTokens, isSourceFile, MAX_TOKENS } from "./file-size.ts";
 
 // Pre-commit check: reads the staged contents, not the working tree, so what
 // is checked is what gets committed.
@@ -15,7 +10,7 @@ function git(...args: string[]) {
 
 const offenders = git("diff", "--cached", "--name-only", "--diff-filter=ACMR")
   .split("\n")
-  .filter((path) => isSourceFile(path) && !OVER_BUDGET.includes(path))
+  .filter(isSourceFile)
   .map((path) => ({ path, tokens: estimateTokens(git("show", `:${path}`)) }))
   .filter(({ tokens }) => tokens > MAX_TOKENS);
 
