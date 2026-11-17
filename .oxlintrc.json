@@ -1,5 +1,17 @@
 {
   "$schema": "./node_modules/oxlint/configuration_schema.json",
   "plugins": ["typescript", "unicorn", "oxc", "react", "import", "vitest"],
+  "categories": { "correctness": "error" },
+  "rules": {
+    "no-unused-vars": "warn",
+    "no-empty-pattern": "warn",
+    "react/set-state-in-effect": "warn",
+    "react/refs": "warn",
+    "react-hooks/exhaustive-deps": "warn",
+    "vitest/require-mock-type-parameters": "warn",
+    "vitest/require-to-throw-message": "warn",
+    "unicorn/no-useless-fallback-in-spread": "warn",
+    "unicorn/no-invalid-fetch-options": "warn"
+  },
   "ignorePatterns": [".agents/**", ".claude/**", "build/**", "drizzle/**"]
 }
