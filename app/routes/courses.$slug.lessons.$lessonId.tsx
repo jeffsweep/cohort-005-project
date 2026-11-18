@@ -20,32 +20,26 @@ import { Button } from "~/components/ui/button";
 import { LockedLesson } from "~/components/lesson-locked";
 import { FullLesson } from "~/components/lesson-full";
 import {
-  flattenCourseLessons,
-  getCourseWithDetails,
-  getLessonById,
-  getModuleById,
-  getUserById,
-} from "~/modules/lesson-viewer/curriculum.server";
-import {
   calculateWatchProgress,
+  computeResult,
+  flattenCourseLessons,
+  getBestAttempt,
+  getCommentById,
+  getCourseWithDetails,
   getLastWatchPosition,
+  getLessonById,
   getLessonProgress,
   getLessonProgressForCourse,
-  markLessonComplete,
-  markLessonInProgress,
-} from "~/modules/lesson-viewer/progress.server";
-import {
-  getCommentById,
   getLessonThread,
-  renderThread,
-} from "~/modules/lesson-viewer/thread.server";
-import {
-  computeResult,
-  getBestAttempt,
+  getModuleById,
   getQuizById,
   getQuizByLessonId,
   getQuizWithQuestions,
-} from "~/modules/lesson-viewer/quiz.server";
+  getUserById,
+  markLessonComplete,
+  markLessonInProgress,
+  renderThread,
+} from "~/modules/lesson-viewer/index.server";
 import { AlertTriangle } from "lucide-react";
 import { renderMarkdown } from "~/lib/markdown.server";
 import { data, isRouteErrorResponse } from "react-router";
@@ -424,7 +418,7 @@ export async function action({ params, request }: Route.ActionArgs) {
   }
 
   if (intent === "mark-complete") {
-    markLessonComplete(currentUserId, lessonId);
+    markLessonComplete(currentUserId, lessonId, new Date());
     return { success: true };
   }
 
