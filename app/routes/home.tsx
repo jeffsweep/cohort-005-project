@@ -20,6 +20,7 @@ import {
 } from "lucide-react";
 import { CourseImage } from "~/components/course-image";
 import { DevUI } from "~/components/dev-ui";
+import { SiteFooter } from "~/components/site-footer";
 import { getCurrentUserId, getDevCountry } from "~/lib/session";
 import { getCountryTierInfo, COUNTRIES } from "~/lib/ppp";
 import { eq, like, and, or, sql } from "drizzle-orm";
@@ -159,6 +160,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     devCountry,
     countryTierInfo,
     countries: COUNTRIES,
+    copyrightYear: new Date().getFullYear(),
   };
 }
 
@@ -172,6 +174,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     devCountry,
     countryTierInfo,
     countries,
+    copyrightYear,
   } = loaderData;
   const [isDark, setIsDark] = useState(false);
 
@@ -340,11 +343,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         </section>
       )}
 
-      <footer className="border-t border-border py-8">
-        <div className="mx-auto max-w-6xl px-6 text-center text-sm text-muted-foreground">
-          Cadence
-        </div>
-      </footer>
+      <SiteFooter year={copyrightYear} />
 
       <DevUI
         users={users}
