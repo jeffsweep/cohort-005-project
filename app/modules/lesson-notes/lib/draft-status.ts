@@ -2,6 +2,7 @@ export type SavedNote = { body: string; updatedAt: string };
 
 export type NoteDraftStatus =
   | { kind: "empty" }
+  | { kind: "cleared" }
   | { kind: "saving" }
   | { kind: "error"; message: string }
   | { kind: "too-long"; over: number }
@@ -39,7 +40,8 @@ export function noteDraftStatus(input: NoteDraftInput): {
     return { status: { kind: "error", message: error }, canSave: true };
   }
   if (trimmed.length === 0) {
-    return { status: { kind: "empty" }, canSave: false };
+    // The server refuses an empty Note, so clearing one cannot be saved.
+    return { status: { kind: saved ? "cleared" : "empty" }, canSave: false };
   }
   if (changed || !saved) {
     return { status: { kind: "unsaved" }, canSave: true };

@@ -92,4 +92,11 @@ describe("noteDraftStatus", () => {
       canSave: false,
     });
   });
+
+  it("warns that a cleared Note keeps its saved text, since an empty Note cannot be saved", () => {
+    expect(status({ draft: "  ", saved, maxLength: 100 })).toEqual({
+      status: { kind: "cleared" },
+      canSave: false,
+    });
+  });
 });

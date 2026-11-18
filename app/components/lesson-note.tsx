@@ -109,6 +109,12 @@ function NoteStatusLine({ status }: { status: NoteDraftStatus }) {
       return <span className="text-xs text-red-600">{status.message}</span>;
     case "saving":
       return <span className="text-xs text-muted-foreground">Saving...</span>;
+    case "cleared":
+      return (
+        <span className="text-xs text-amber-600">
+          An empty note can't be saved; your saved note is kept
+        </span>
+      );
     case "empty":
       return <span />;
   }
