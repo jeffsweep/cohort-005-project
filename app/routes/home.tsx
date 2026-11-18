@@ -160,6 +160,7 @@ export async function loader({ request }: Route.LoaderArgs) {
     devCountry,
     countryTierInfo,
     countries: COUNTRIES,
+    copyrightYear: new Date().getFullYear(),
   };
 }
 
@@ -173,6 +174,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
     devCountry,
     countryTierInfo,
     countries,
+    copyrightYear,
   } = loaderData;
   const [isDark, setIsDark] = useState(false);
 
@@ -341,7 +343,7 @@ export default function Home({ loaderData }: Route.ComponentProps) {
         </section>
       )}
 
-      <SiteFooter />
+      <SiteFooter year={copyrightYear} />
 
       <DevUI
         users={users}
